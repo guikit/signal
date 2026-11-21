@@ -1,12 +1,22 @@
 #include "guikit/guikit.hpp"
 #include "guikit/signal.hpp"
+#if defined(GUIKIT_HAS_BACKEND_SDL3) && GUIKIT_HAS_BACKEND_SDL3
 #include "guikit/backend/sdl_gl_shader_engine.hpp"
 #if __has_include(<SDL3/SDL.h>)
 #include <SDL3/SDL.h>
 #endif
+#endif
+#if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
 #include "guikit/backend/thor_canvas.hpp"
+#endif
 #include "keel/keel.h"
 #include "keel/math.h"
+
+#if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
+using TestCanvas = guikit::ThorCanvas;
+#else
+using TestCanvas = guikit::NullCanvas;
+#endif
 
 static keel::i32 g_failures = 0;
 
@@ -33,7 +43,7 @@ void TestSignalViewWidgetWorkflow() {
     using namespace guikit;
 
     Context ui;
-    ThorCanvas canvas;
+    TestCanvas canvas;
 
     const keel::u32 width = 960;
     const keel::u32 height = 540;
@@ -131,7 +141,7 @@ void TestSonarViewWidgetWorkflow() {
     keel::println("  - TestSonarViewWidgetWorkflow...");
 
     Context ui;
-    ThorCanvas canvas;
+    TestCanvas canvas;
 
     const keel::u32 width = 900;
     const keel::u32 height = 600;
@@ -240,7 +250,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
     using namespace guikit;
 
     Context ui;
-    ThorCanvas canvas;
+    TestCanvas canvas;
 
     const keel::u32 width = 800;
     const keel::u32 height = 600;
@@ -293,6 +303,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
     CHECK(sonarPass.plotRect.w > 100.0f);
     CHECK(sonarPass.clipRect.w > 100.0f);
 
+#if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
     // Verify PunchHole created transparent underlay pixels inside sonarPass.plotRect
     keel::usize transparentCount = 0;
     const keel::i32 sx0 = static_cast<keel::i32>(sonarPass.plotRect.x) + 4;
@@ -308,6 +319,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
         }
     }
     CHECK(transparentCount > 50);
+#endif
 
     // 2. Partial dirty-rect update on top button (outside SonarView & SignalView) preserves cached GPU passes
     btnToggle = true;
@@ -328,6 +340,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
     renderUI();
     ui.EndFrame(canvas);
 
+#if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
     keel::usize opaqueCount = 0;
     for (keel::i32 y = sy0; y < sy1; y += 8) {
         for (keel::i32 x = sx0; x < sx1; x += 8) {
@@ -338,8 +351,11 @@ void TestSonarAndSignalGpuShaderPipeline() {
         }
     }
     CHECK(opaqueCount > 20);
+#endif
 
-#if __has_include(<SDL3/SDL.h>)
+#if defined(GUIKIT_HAS_BACKEND_SDL3) && GUIKIT_HAS_BACKEND_SDL3 && \
+    defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG && \
+    __has_include(<SDL3/SDL.h>)
     // 4. Test real SDL3 OpenGL renderer + SdlGlShaderEngine underlay rendering & pixel readback
     if (SDL_Init(SDL_INIT_VIDEO)) {
         SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
@@ -426,7 +442,7 @@ void TestWaterfallViewWidgetAndGpuRingBuffer() {
     using namespace guikit;
 
     Context ui;
-    ThorCanvas canvas;
+    TestCanvas canvas;
     canvas.SetGpuShadersEnabled(true);
 
     const keel::u32 width = 960;
@@ -550,7 +566,7 @@ void TestPartiallyClippedGpuScenesAboveBottomPanel() {
         // UNCLIPPED plotRect extending below the ScrollArea clip boundary, causing the GPU underlay to drop and flash black.
         {
             Context clipUi;
-            ThorCanvas clipCanvas;
+            TestCanvas clipCanvas;
             keel::Array<keel::u32> clipPixels(1200 * 800);
             clipCanvas.SetTarget(clipPixels.data(), 1200, 800, 1200);
             clipCanvas.SetGpuShadersEnabled(true);
