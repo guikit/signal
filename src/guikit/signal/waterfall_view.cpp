@@ -969,7 +969,7 @@ WaterfallViewResponse WaterfallView::Run(
     const UiSize size = opts.size;
     const bool effDisabled = opts.disabled || ctx.IsDisabled();
 
-    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 3u), id);
+    Node* node = ctx.CreateNode(keel::from_underlying<NodeType>(keel::as<keel::u16>(NodeType::User) + 3u), id);
     auto* payload = ctx.AllocPayload<WaterfallViewPayload>();
     payload->opts = opts;
     payload->opts.tooltip = ctx.AllocText(opts.tooltip);

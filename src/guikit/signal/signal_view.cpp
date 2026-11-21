@@ -1630,7 +1630,7 @@ SignalViewResponse SignalView::Run(
     }
 
     // Create Scene Graph Node
-    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 1u), id);
+    Node* node = ctx.CreateNode(keel::from_underlying<NodeType>(keel::as<keel::u16>(NodeType::User) + 1u), id);
     auto* payload = ctx.AllocPayload<SignalViewPayload>();
     payload->samples = samples;
     payload->opts = opts;

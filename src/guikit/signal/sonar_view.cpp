@@ -1417,7 +1417,7 @@ SonarViewResponse SonarView::Run(
         );
     }
 
-    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 2u), id);
+    Node* node = ctx.CreateNode(keel::from_underlying<NodeType>(keel::as<keel::u16>(NodeType::User) + 2u), id);
     auto* payload = ctx.AllocPayload<SonarViewPayload>();
     payload->opts = opts;
     payload->opts.targets = state.renderedTargets.as_ref();
