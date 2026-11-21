@@ -302,6 +302,9 @@ void TestSonarAndSignalGpuShaderPipeline() {
     CHECK(sonarPass.dataField.extent(1) == 128);
     CHECK(sonarPass.plotRect.w > 100.0f);
     CHECK(sonarPass.clipRect.w > 100.0f);
+    // Origin uniform must be relative to plotRect (centered in PPI mode) so PushTransform offsets never shift the radar
+    CHECK(keel::abs(sonarPass.params[0].x - sonarPass.plotRect.w * 0.5f) < 2.0f);
+    CHECK(keel::abs(sonarPass.params[0].y - sonarPass.plotRect.h * 0.5f) < 2.0f);
 
 #if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
     // Verify PunchHole created transparent underlay pixels inside sonarPass.plotRect

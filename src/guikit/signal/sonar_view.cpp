@@ -306,20 +306,19 @@ void DrawArcPolyline(
     keel::f32 endScreenDeg,
     Color color,
     keel::f32 thickness,
-    keel::i32 segments = 48
+    keel::i32 /*segments*/ = 48
 ) {
-    if (radiusPx <= 1.0f || segments < 2) return;
-    Vec2 prev{};
-    for (keel::i32 i = 0; i <= segments; ++i) {
-        const keel::f32 t = keel::as<keel::f32>(i) / keel::as<keel::f32>(segments);
-        const keel::f32 deg = startScreenDeg + t * (endScreenDeg - startScreenDeg);
-        const keel::f32 rad = keel::deg_to_rad(deg);
-        const Vec2 pt{center.x + keel::sin(rad) * radiusPx, center.y - keel::cos(rad) * radiusPx};
-        if (i > 0) {
-            canvas.DrawLine(prev, pt, color, thickness);
-        }
-        prev = pt;
-    }
+    if (radiusPx <= 1.0f || color.a == 0u || thickness <= 0.0f) return;
+    // Sonar screen deg has 0 deg at North (0, -1), which is -90 deg in standard +X screen coordinates
+    canvas.DrawArc(
+        center,
+        radiusPx,
+        keel::deg_to_rad(startScreenDeg - 90.0f),
+        keel::deg_to_rad(endScreenDeg - 90.0f),
+        color,
+        thickness,
+        /*roundCaps=*/false
+    );
 }
 
 void DrawTargetSymbol(
@@ -509,7 +508,7 @@ float samplePolarTexel(float rIdx, float bIdx) {
 }
 
 void main() {
-    vec2 pt = u_PlotRect.xy + v_uv * u_PlotRect.zw;
+    vec2 pt = v_uv * u_PlotRect.zw;
     vec2 origin = u_Params[0].xy;
     float maxRadiusPx = u_Params[0].z;
 
@@ -646,10 +645,21 @@ void main() {
         gpuDesc.colormapId = keel::as<keel::u8>(opts.colormap);
         gpuDesc.lutAbgr256 = GetColormapLutAbgr(opts.colormap);
 
-        gpuDesc.params[0] = {geom.origin.x * s, geom.origin.y * s, geom.maxRadiusPx * s, 0.0f};
+        // Pass origin and B-Scan sub-rect relative to plotRect so the shader is invariant under PushTransform
+        gpuDesc.params[0] = {
+            (geom.origin.x - plotRect.x) * s,
+            (geom.origin.y - plotRect.y) * s,
+            geom.maxRadiusPx * s,
+            0.0f
+        };
         gpuDesc.params[1] = {geom.minRange, geom.visibleMaxRange, opts.maxRangeMeters, keel::as<keel::f32>(keel::to_underlying(geom.mode))};
         gpuDesc.params[2] = {opts.matrixStartBearingDeg, opts.matrixEndBearingDeg, geom.headingDeg, geom.sectorApertureDeg};
-        gpuDesc.params[3] = {bscan.x * s, bscan.y * s, bscan.w * s, bscan.h * s};
+        gpuDesc.params[3] = {
+            (bscan.x - plotRect.x) * s,
+            (bscan.y - plotRect.y) * s,
+            bscan.w * s,
+            bscan.h * s
+        };
         gpuDesc.params[4] = {gainLinear, opts.tvgAmount, opts.clutterThreshold, 0.0f};
         return gpuDesc;
     };
