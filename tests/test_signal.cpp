@@ -52,17 +52,17 @@ void TestSignalViewWidgetWorkflow() {
 
     // Generate 240,000 samples (5.0 seconds @ 48 kHz) with a 2 kHz sine + 8 kHz harmonic
     const keel::usize numSamples = 240000;
-    const float sampleRate = 48000.0f;
-    keel::Array<float> samples(numSamples, 0.0f);
+    const keel::f32 sampleRate = 48000.0f;
+    keel::Array<keel::f32> samples(numSamples, 0.0f);
     for (keel::usize i = 0; i < numSamples; ++i) {
-        const float t = static_cast<float>(i) / sampleRate;
+        const keel::f32 t = keel::as<keel::f32>(i) / sampleRate;
         samples[i] = 0.6f * keel::sin(keel::kTauF * 2000.0f * t) +
                      0.25f * keel::sin(keel::kTauF * 8000.0f * t);
     }
 
-    float splitRatio = 0.50f;
-    float waveformGain = 1.0f;
-    double playheadSec = 1.25;
+    keel::f32 splitRatio = 0.50f;
+    keel::f32 waveformGain = 1.0f;
+    keel::f64 playheadSec = 1.25;
     SignalSelection selection{
         .active = true,
         .startTimeSec = 0.5,
@@ -78,7 +78,7 @@ void TestSignalViewWidgetWorkflow() {
     SignalViewResponse resp{};
 
     auto renderFrame = [&]() {
-        ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+        ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
         if (auto box = ui.Box({
             .width = SizeMode::Stretch,
             .height = SizeMode::Stretch,
@@ -111,9 +111,9 @@ void TestSignalViewWidgetWorkflow() {
     CHECK(resp.rect.w > 800.0f);
     CHECK(resp.rect.h > 400.0f);
     CHECK(resp.totalSamples == numSamples);
-    CHECK_NEAR(static_cast<float>(resp.totalDurationSec), 5.0f, 0.01f);
-    CHECK_NEAR(static_cast<float>(resp.viewStartSec), 0.0f, 0.01f);
-    CHECK_NEAR(static_cast<float>(resp.viewEndSec), 5.0f, 0.01f);
+    CHECK_NEAR(keel::as<keel::f32>(resp.totalDurationSec), 5.0f, 0.01f);
+    CHECK_NEAR(keel::as<keel::f32>(resp.viewStartSec), 0.0f, 0.01f);
+    CHECK_NEAR(keel::as<keel::f32>(resp.viewEndSec), 5.0f, 0.01f);
     CHECK(resp.selectionPeakDbFs > -10.0f);
     CHECK(resp.selectionRmsDbFs > -15.0f);
     CHECK(resp.selectionCentroidHz > 1500.0f);
@@ -150,9 +150,9 @@ void TestSonarViewWidgetWorkflow() {
 
     const keel::u32 numBeams = 90;
     const keel::u32 numBins = 128;
-    keel::Array<float> polarMatrix(numBeams * numBins, 0.25f);
+    keel::Array<keel::f32> polarMatrix(numBeams * numBins, 0.25f);
     for (keel::usize i = 0; i < polarMatrix.size(); ++i) {
-        polarMatrix[i] = 0.15f + 0.65f * static_cast<float>((i * 17) % 100) / 100.0f;
+        polarMatrix[i] = 0.15f + 0.65f * keel::as<keel::f32>((i * 17) % 100) / 100.0f;
     }
 
     const SonarTarget targets[] = {
@@ -184,13 +184,13 @@ void TestSonarViewWidgetWorkflow() {
     SonarScanMode scanMode = SonarScanMode::MultibeamContinuous;
     Colormap colormap = Colormap::Gold;
     keel::i32 selectedId = 10;
-    float eblBrg = 25.0f;
-    float vrmRng = 200.0f;
-    float rangeZoom = 1.0f;
+    keel::f32 eblBrg = 25.0f;
+    keel::f32 vrmRng = 200.0f;
+    keel::f32 rangeZoom = 1.0f;
     SonarViewResponse lastResp{};
 
     auto renderFrame = [&]() {
-        ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+        ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
         lastResp = guikit::signal::SonarView(ui, polarMatrix, {
             .numBeams = numBeams,
             .numRangeBins = numBins,
@@ -257,10 +257,10 @@ void TestSonarAndSignalGpuShaderPipeline() {
     keel::Array<keel::u32> pixels(width * height, 0xFF112233u);
     canvas.SetTarget(pixels.data(), width, height, width);
 
-    keel::Array<float> sonarMatrix(90 * 128, 0.4f);
-    keel::Array<float> audioSamples(4096, 0.0f);
+    keel::Array<keel::f32> sonarMatrix(90 * 128, 0.4f);
+    keel::Array<keel::f32> audioSamples(4096, 0.0f);
     for (keel::usize i = 0; i < audioSamples.size(); ++i) {
-        audioSamples[i] = keel::sin(static_cast<float>(i) * 0.1f) * 0.5f;
+        audioSamples[i] = keel::sin(keel::as<keel::f32>(i) * 0.1f) * 0.5f;
     }
 
     bool btnToggle = false;
@@ -285,11 +285,11 @@ void TestSonarAndSignalGpuShaderPipeline() {
     canvas.SetGpuShadersEnabled(true);
     CHECK(canvas.SupportsGpuShaders());
 
-    ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+    ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
     renderUI();
     ui.EndFrame(canvas);
 
-    ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+    ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
     renderUI();
     ui.EndFrame(canvas);
 
@@ -306,13 +306,13 @@ void TestSonarAndSignalGpuShaderPipeline() {
 #if defined(GUIKIT_HAS_BACKEND_THORVG) && GUIKIT_HAS_BACKEND_THORVG
     // Verify PunchHole created transparent underlay pixels inside sonarPass.plotRect
     keel::usize transparentCount = 0;
-    const keel::i32 sx0 = static_cast<keel::i32>(sonarPass.plotRect.x) + 4;
-    const keel::i32 sy0 = static_cast<keel::i32>(sonarPass.plotRect.y) + 4;
-    const keel::i32 sx1 = static_cast<keel::i32>(sonarPass.plotRect.Right()) - 4;
-    const keel::i32 sy1 = static_cast<keel::i32>(sonarPass.plotRect.Bottom()) - 4;
+    const keel::i32 sx0 = keel::as<keel::i32>(sonarPass.plotRect.x) + 4;
+    const keel::i32 sy0 = keel::as<keel::i32>(sonarPass.plotRect.y) + 4;
+    const keel::i32 sx1 = keel::as<keel::i32>(sonarPass.plotRect.Right()) - 4;
+    const keel::i32 sy1 = keel::as<keel::i32>(sonarPass.plotRect.Bottom()) - 4;
     for (keel::i32 y = sy0; y < sy1; y += 4) {
         for (keel::i32 x = sx0; x < sx1; x += 4) {
-            const keel::u32 px = pixels[static_cast<keel::usize>(y) * width + static_cast<keel::usize>(x)];
+            const keel::u32 px = pixels[keel::as<keel::usize>(y) * width + keel::as<keel::usize>(x)];
             if ((px >> 24) == 0) {
                 transparentCount++;
             }
@@ -323,7 +323,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
 
     // 2. Partial dirty-rect update on top button (outside SonarView & SignalView) preserves cached GPU passes
     btnToggle = true;
-    ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+    ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
     renderUI();
     ui.EndFrame(canvas);
 
@@ -336,7 +336,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
     CHECK(!canvas.SupportsGpuShaders());
     CHECK(!canvas.HasActiveGpuPasses());
 
-    ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+    ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
     renderUI();
     ui.EndFrame(canvas);
 
@@ -344,7 +344,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
     keel::usize opaqueCount = 0;
     for (keel::i32 y = sy0; y < sy1; y += 8) {
         for (keel::i32 x = sx0; x < sx1; x += 8) {
-            const keel::u32 px = pixels[static_cast<keel::usize>(y) * width + static_cast<keel::usize>(x)];
+            const keel::u32 px = pixels[keel::as<keel::usize>(y) * width + keel::as<keel::usize>(x)];
             if ((px >> 24) == 255) {
                 opaqueCount++;
             }
@@ -379,7 +379,7 @@ void TestSonarAndSignalGpuShaderPipeline() {
                     sonarMatrix[10] = 0.9f;
                     btnToggle = !btnToggle;
                 }
-                ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+                ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
                 renderUI();
                 ui.EndFrame(canvas);
 
@@ -394,8 +394,8 @@ void TestSonarAndSignalGpuShaderPipeline() {
                     SDL_Surface* readSurf = SDL_RenderReadPixels(ren, nullptr);
                     CHECK(readSurf != nullptr);
                     if (readSurf) {
-                        CHECK(readSurf->w == static_cast<keel::i32>(width));
-                        CHECK(readSurf->h == static_cast<keel::i32>(height));
+                        CHECK(readSurf->w == keel::as<keel::i32>(width));
+                        CHECK(readSurf->h == keel::as<keel::i32>(height));
                         SDL_DestroySurface(readSurf);
                     }
                 }
@@ -406,23 +406,23 @@ void TestSonarAndSignalGpuShaderPipeline() {
             // 5. Verify mouse crosshair movement over SignalView uses StaticBaseLayerCache (RestoreRegion),
             //    keeps partial dirty rect (!IsFullRepaint), preserves GPU underlay pass, and runs in < 2.0 ms/frame.
             const Rect specPlot = canvas.GetGpuShaderPasses()[1].plotRect;
-            double totalCrosshairMs = 0.0;
+            keel::f64 totalCrosshairMs = 0.0;
             constexpr keel::i32 kMoveFrames = 20;
             for (keel::i32 m = 0; m < kMoveFrames; ++m) {
-                ui.OnMouseMove({specPlot.x + 25.0f + static_cast<float>(m * 4), specPlot.y + 15.0f + static_cast<float>((m % 5) * 3)});
+                ui.OnMouseMove({specPlot.x + 25.0f + keel::as<keel::f32>(m * 4), specPlot.y + 15.0f + keel::as<keel::f32>((m % 5) * 3)});
                 const keel::u64 t0 = keel::monotonic_ns();
-                ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+                ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
                 renderUI();
                 ui.EndFrame(canvas);
                 const keel::u64 t1 = keel::monotonic_ns();
-                totalCrosshairMs += static_cast<double>(t1 - t0) / 1e6;
+                totalCrosshairMs += keel::as<keel::f64>(t1 - t0) / 1e6;
 
                 CHECK(ui.HasDirtyDamage());
                 CHECK(!ui.IsFullRepaint());
                 CHECK(canvas.HasActiveGpuPasses());
                 CHECK(canvas.GetGpuShaderPasses().size() == 2);
             }
-            const double avgCrosshairMs = totalCrosshairMs / static_cast<double>(kMoveFrames);
+            const keel::f64 avgCrosshairMs = totalCrosshairMs / keel::as<keel::f64>(kMoveFrames);
             keel::println("  [BENCH] SignalView mouse crosshair move CPU frame time: {:.3f} ms/frame", avgCrosshairMs);
             CHECK(avgCrosshairMs < 5.0);
 
@@ -451,19 +451,19 @@ void TestWaterfallViewWidgetAndGpuRingBuffer() {
     canvas.SetTarget(pixels.data(), width, height, width);
 
     constexpr keel::u32 kBins = 256;
-    keel::Array<float> specSlice(kBins, -95.0f);
-    keel::Array<float> doaSlice(181, -85.0f);
+    keel::Array<keel::f32> specSlice(kBins, -95.0f);
+    keel::Array<keel::f32> doaSlice(181, -85.0f);
 
     // Inject synthetic peaks
     for (keel::u32 i = 0; i < kBins; ++i) {
-        const float d1 = (static_cast<float>(i) - 64.0f) / 3.0f;
-        const float d2 = (static_cast<float>(i) - 128.0f) / 4.0f;
+        const keel::f32 d1 = (keel::as<keel::f32>(i) - 64.0f) / 3.0f;
+        const keel::f32 d2 = (keel::as<keel::f32>(i) - 128.0f) / 4.0f;
         specSlice[i] = -95.0f + 65.0f * keel::exp(-0.5f * d1 * d1) + 48.0f * keel::exp(-0.5f * d2 * d2);
     }
     for (keel::usize i = 0; i < doaSlice.size(); ++i) {
-        const float deg = -90.0f + static_cast<float>(i);
-        const float b1 = (deg + 25.0f) / 3.5f;
-        const float b2 = (deg - 32.0f) / 4.0f;
+        const keel::f32 deg = -90.0f + keel::as<keel::f32>(i);
+        const keel::f32 b1 = (deg + 25.0f) / 3.5f;
+        const keel::f32 b2 = (deg - 32.0f) / 4.0f;
         doaSlice[i] = -85.0f + 58.0f * keel::exp(-0.5f * b1 * b1) + 46.0f * keel::exp(-0.5f * b2 * b2);
     }
 
@@ -473,7 +473,7 @@ void TestWaterfallViewWidgetAndGpuRingBuffer() {
     };
 
     keel::u64 seq = 1;
-    float f0 = 250.0f;
+    keel::f32 f0 = 250.0f;
     WaterfallViewResponse respSpec;
     WaterfallViewResponse respDoa;
 
@@ -506,7 +506,7 @@ void TestWaterfallViewWidgetAndGpuRingBuffer() {
                 .mode = WaterfallMode::DoaBtr,
                 .viewLayout = WaterfallLayout::SplitTraceAndWaterfall,
                 .colormap = Colormap::Blue,
-                .numBins = static_cast<keel::u32>(doaSlice.size()),
+                .numBins = keel::as<keel::u32>(doaSlice.size()),
                 .historyRows = 128,
                 .historyDurationSec = 15.0f,
                 .minX = -90.0f,
@@ -523,8 +523,8 @@ void TestWaterfallViewWidgetAndGpuRingBuffer() {
 
     // Frame 1..3: Layout and ingest first 3 slices
     for (keel::i32 f = 0; f < 3; ++f) {
-        seq = static_cast<keel::u64>(f + 1);
-        ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+        seq = keel::as<keel::u64>(f + 1);
+        ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
         renderUI();
         ui.EndFrame(canvas);
     }
@@ -540,13 +540,13 @@ void TestWaterfallViewWidgetAndGpuRingBuffer() {
     CHECK(canvas.GetGpuShaderPasses().size() == 2);
 
     // Pause ingestion (keep seq constant) and test mouse crosshair movement over WaterfallView uses StaticBaseLayerCache
-    ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+    ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
     renderUI();
     ui.EndFrame(canvas);
 
     const Rect wfRect = canvas.GetGpuShaderPasses()[0].plotRect;
     ui.OnMouseMove({wfRect.x + 40.0f, wfRect.y + 30.0f});
-    ui.BeginFrame({static_cast<float>(width), static_cast<float>(height)});
+    ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
     renderUI();
     ui.EndFrame(canvas);
 
@@ -571,8 +571,8 @@ void TestPartiallyClippedGpuScenesAboveBottomPanel() {
             clipCanvas.SetTarget(clipPixels.data(), 1200, 800, 1200);
             clipCanvas.SetGpuShadersEnabled(true);
 
-            keel::Array<float> sonarMatrix(64 * 64, 0.5f);
-            keel::Array<float> wfSlice(128, -45.0f);
+            keel::Array<keel::f32> sonarMatrix(64 * 64, 0.5f);
+            keel::Array<keel::f32> wfSlice(128, -45.0f);
             keel::u64 wfSeq = 1;
             bool bottomOpen = true;
             keel::String codeBuf("auto resp = guikit::signal::SonarView(ui, polarMatrix, {\n    .numBeams = 180,\n    .numRangeBins = 256\n});");
@@ -581,7 +581,7 @@ void TestPartiallyClippedGpuScenesAboveBottomPanel() {
             WaterfallViewResponse lastWfResp{};
             bool showWaterfall = false;
 
-            auto renderClippedScene = [&](double timeSec) {
+            auto renderClippedScene = [&](keel::f64 timeSec) {
                 clipUi.SetCurrentTime(timeSec);
                 if (auto rootCol = clipUi.Column({.gap = 0.0f, .padding = 0.0f})) {
                     // Upper ScrollArea is constrained to ~540px while inner simulated tablet/window is 700px tall

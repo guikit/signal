@@ -14,7 +14,7 @@ namespace guikit::signal {
 /// Renders a synchronized Waveform + STFT Spectrogram analyzer widget.
 inline SignalViewResponse SignalView(
     Context& ui,
-    keel::ArrayRef<float> samples,
+    keel::ArrayRef<keel::f32> samples,
     const SignalViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {
@@ -24,7 +24,7 @@ inline SignalViewResponse SignalView(
 /// Renders a Polar Heatmap / Diver Detection Sonar / PPI 360 / Sector / B-Scan Radar widget.
 inline SonarViewResponse SonarView(
     Context& ui,
-    keel::ArrayRef<float> polarMatrix,
+    keel::ArrayRef<keel::f32> polarMatrix,
     const SonarViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {
@@ -34,7 +34,7 @@ inline SonarViewResponse SonarView(
 /// Renders an RTSA Spectrum Analyzer & DOA / BTR Waterfall tracker widget.
 inline WaterfallViewResponse WaterfallView(
     Context& ui,
-    keel::ArrayRef<float> latestSliceDb,
+    keel::ArrayRef<keel::f32> latestSliceDb,
     const WaterfallViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {

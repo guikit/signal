@@ -16,7 +16,7 @@ namespace {
 struct SonarViewState {
     keel::u32 numBeams{0};
     keel::u32 numRangeBins{0};
-    keel::Array<float> persistentGrid{};
+    keel::Array<keel::f32> persistentGrid{};
     keel::Array<keel::u32> abgrPixels{};
     keel::Array<SonarTarget> renderedTargets{};
     keel::u32 cachedImgW{0};
@@ -24,12 +24,12 @@ struct SonarViewState {
     keel::u64 gridGeneration{1};
     keel::u64 lastInputHash{0};
 
-    float rangeZoom{1.0f};
-    float eblBearingDeg{35.0f};
-    float vrmRangeMeters{220.0f};
+    keel::f32 rangeZoom{1.0f};
+    keel::f32 eblBearingDeg{35.0f};
+    keel::f32 vrmRangeMeters{220.0f};
     bool eblVrmDragging{false};
     keel::i32 selectedTargetId{-1};
-    float prevSweepAngleDeg{0.0f};
+    keel::f32 prevSweepAngleDeg{0.0f};
     bool initialized{false};
 
     keel::u64 baseLayerKey{0};
@@ -59,22 +59,22 @@ struct SonarViewPayload {
 };
 
 /// Normalizes an angle in degrees to [0, 360).
-[[nodiscard]] inline float NormalizeBearingDeg(float deg) noexcept {
-    float r = keel::fmod(deg, 360.0f);
+[[nodiscard]] inline keel::f32 NormalizeBearingDeg(keel::f32 deg) noexcept {
+    keel::f32 r = keel::fmod(deg, 360.0f);
     if (r < 0.0f) r += 360.0f;
     return r;
 }
 
 /// Computes signed shortest angular difference (a - b) in degrees within [-180, +180].
-[[nodiscard]] inline float SignedAngleDiffDeg(float a, float b) noexcept {
+[[nodiscard]] inline keel::f32 SignedAngleDiffDeg(keel::f32 a, keel::f32 b) noexcept {
     return keel::fmod(a - b + 540.0f, 360.0f) - 180.0f;
 }
 
 /// Returns true if `bearingDeg` lies inside the clockwise sector from `startDeg` to `endDeg`.
-[[nodiscard]] inline bool IsBearingInSector(float bearingDeg, float startDeg, float endDeg) noexcept {
-    const float b = NormalizeBearingDeg(bearingDeg);
-    const float s = NormalizeBearingDeg(startDeg);
-    const float e = NormalizeBearingDeg(endDeg);
+[[nodiscard]] inline bool IsBearingInSector(keel::f32 bearingDeg, keel::f32 startDeg, keel::f32 endDeg) noexcept {
+    const keel::f32 b = NormalizeBearingDeg(bearingDeg);
+    const keel::f32 s = NormalizeBearingDeg(startDeg);
+    const keel::f32 e = NormalizeBearingDeg(endDeg);
     if (keel::abs(endDeg - startDeg) >= 359.9f) return true;
     if (s <= e) {
         return b >= s && b <= e;
@@ -86,17 +86,17 @@ struct SonarViewPayload {
 struct SonarPlotGeometry {
     Rect plotRect{};
     SonarDisplayMode mode{SonarDisplayMode::PPI_360};
-    float visibleMaxRange{500.0f};
-    float minRange{0.0f};
-    float headingDeg{0.0f};
-    float sectorApertureDeg{120.0f};
-    float startBearingDeg{0.0f};
-    float endBearingDeg{360.0f};
+    keel::f32 visibleMaxRange{500.0f};
+    keel::f32 minRange{0.0f};
+    keel::f32 headingDeg{0.0f};
+    keel::f32 sectorApertureDeg{120.0f};
+    keel::f32 startBearingDeg{0.0f};
+    keel::f32 endBearingDeg{360.0f};
 
     Vec2 origin{};          ///< Screen pixel origin of the transducer / radar center
-    float maxRadiusPx{1.0f};///< Pixel radius corresponding to `visibleMaxRange`
+    keel::f32 maxRadiusPx{1.0f};///< Pixel radius corresponding to `visibleMaxRange`
 
-    static SonarPlotGeometry Compute(const Rect& rect, const SonarViewOptions& opts, float rangeZoom) noexcept {
+    static SonarPlotGeometry Compute(const Rect& rect, const SonarViewOptions& opts, keel::f32 rangeZoom) noexcept {
         SonarPlotGeometry g;
         g.plotRect = rect;
         g.mode = opts.displayMode;
@@ -108,25 +108,25 @@ struct SonarPlotGeometry {
         g.endBearingDeg = opts.matrixEndBearingDeg;
 
         if (g.mode == SonarDisplayMode::PPI_360) {
-            const float pad = 28.0f;
+            const keel::f32 pad = 28.0f;
             g.origin = {rect.x + rect.w * 0.5f, rect.y + rect.h * 0.5f};
             g.maxRadiusPx = keel::max(24.0f, keel::min(rect.w, rect.h) * 0.5f - pad);
         } else if (g.mode == SonarDisplayMode::SectorWedge) {
-            const float topPad = 32.0f;
-            const float bottomPad = 26.0f;
-            const float sidePad = 32.0f;
-            const float halfAngleRad = keel::deg_to_rad(g.sectorApertureDeg * 0.5f);
-            const float sinHalf = keel::max(0.25f, keel::sin(keel::min(halfAngleRad, keel::kHalfPiF)));
-            const float cosHalf = keel::min(0.0f, keel::cos(halfAngleRad)); // negative if > 180 deg
+            const keel::f32 topPad = 32.0f;
+            const keel::f32 bottomPad = 26.0f;
+            const keel::f32 sidePad = 32.0f;
+            const keel::f32 halfAngleRad = keel::deg_to_rad(g.sectorApertureDeg * 0.5f);
+            const keel::f32 sinHalf = keel::max(0.25f, keel::sin(keel::min(halfAngleRad, keel::kHalfPiF)));
+            const keel::f32 cosHalf = keel::min(0.0f, keel::cos(halfAngleRad)); // negative if > 180 deg
 
-            const float availH = keel::max(40.0f, rect.h - topPad - bottomPad);
-            const float availW = keel::max(40.0f, rect.w - sidePad * 2.0f);
-            const float rByH = availH / (1.0f - cosHalf);
-            const float rByW = (availW * 0.5f) / sinHalf;
+            const keel::f32 availH = keel::max(40.0f, rect.h - topPad - bottomPad);
+            const keel::f32 availW = keel::max(40.0f, rect.w - sidePad * 2.0f);
+            const keel::f32 rByH = availH / (1.0f - cosHalf);
+            const keel::f32 rByW = (availW * 0.5f) / sinHalf;
             g.maxRadiusPx = keel::max(24.0f, keel::min(rByH, rByW));
 
-            const float totalFanH = g.maxRadiusPx * (1.0f - cosHalf);
-            const float topY = rect.y + (rect.h - totalFanH) * 0.5f + 4.0f;
+            const keel::f32 totalFanH = g.maxRadiusPx * (1.0f - cosHalf);
+            const keel::f32 topY = rect.y + (rect.h - totalFanH) * 0.5f + 4.0f;
             g.origin = {rect.x + rect.w * 0.5f, topY + g.maxRadiusPx};
         } else {
             g.origin = {rect.x + 48.0f, rect.Bottom() - 28.0f};
@@ -144,44 +144,44 @@ struct SonarPlotGeometry {
         );
     }
 
-    [[nodiscard]] Vec2 PolarToScreen(float rangeMeters, float bearingDeg) const noexcept {
-        const float rNorm = keel::clamp(rangeMeters / keel::max(1.0f, visibleMaxRange), 0.0f, 1.5f);
+    [[nodiscard]] Vec2 PolarToScreen(keel::f32 rangeMeters, keel::f32 bearingDeg) const noexcept {
+        const keel::f32 rNorm = keel::clamp(rangeMeters / keel::max(1.0f, visibleMaxRange), 0.0f, 1.5f);
         if (mode == SonarDisplayMode::PPI_360) {
-            const float rad = keel::deg_to_rad(bearingDeg);
-            const float rPx = rNorm * maxRadiusPx;
+            const keel::f32 rad = keel::deg_to_rad(bearingDeg);
+            const keel::f32 rPx = rNorm * maxRadiusPx;
             return {origin.x + keel::sin(rad) * rPx, origin.y - keel::cos(rad) * rPx};
         } else if (mode == SonarDisplayMode::SectorWedge) {
-            const float relDeg = SignedAngleDiffDeg(bearingDeg, headingDeg);
-            const float rad = keel::deg_to_rad(relDeg);
-            const float rPx = rNorm * maxRadiusPx;
+            const keel::f32 relDeg = SignedAngleDiffDeg(bearingDeg, headingDeg);
+            const keel::f32 rad = keel::deg_to_rad(relDeg);
+            const keel::f32 rPx = rNorm * maxRadiusPx;
             return {origin.x + keel::sin(rad) * rPx, origin.y - keel::cos(rad) * rPx};
         } else {
             const Rect inner = GetBScanInnerRect();
-            const float halfAp = sectorApertureDeg * 0.5f;
-            const float relDeg = SignedAngleDiffDeg(bearingDeg, headingDeg);
-            const float u = keel::clamp((relDeg + halfAp) / keel::max(1.0f, sectorApertureDeg), 0.0f, 1.0f);
-            const float x = inner.x + u * inner.w;
-            const float y = inner.Bottom() - keel::clamp(rNorm, 0.0f, 1.0f) * inner.h;
+            const keel::f32 halfAp = sectorApertureDeg * 0.5f;
+            const keel::f32 relDeg = SignedAngleDiffDeg(bearingDeg, headingDeg);
+            const keel::f32 u = keel::clamp((relDeg + halfAp) / keel::max(1.0f, sectorApertureDeg), 0.0f, 1.0f);
+            const keel::f32 x = inner.x + u * inner.w;
+            const keel::f32 y = inner.Bottom() - keel::clamp(rNorm, 0.0f, 1.0f) * inner.h;
             return {x, y};
         }
     }
 
-    [[nodiscard]] bool ScreenToPolar(Vec2 pt, float& outRangeMeters, float& outBearingDeg) const noexcept {
+    [[nodiscard]] bool ScreenToPolar(Vec2 pt, keel::f32& outRangeMeters, keel::f32& outBearingDeg) const noexcept {
         if (!plotRect.Contains(pt)) return false;
         if (mode == SonarDisplayMode::PPI_360) {
-            const float dx = pt.x - origin.x;
-            const float dy = origin.y - pt.y;
-            const float distPx = keel::sqrt(dx * dx + dy * dy);
+            const keel::f32 dx = pt.x - origin.x;
+            const keel::f32 dy = origin.y - pt.y;
+            const keel::f32 distPx = keel::sqrt(dx * dx + dy * dy);
             if (distPx > maxRadiusPx) return false;
             outRangeMeters = (distPx / maxRadiusPx) * visibleMaxRange;
             outBearingDeg = NormalizeBearingDeg(keel::rad_to_deg(keel::atan2(dx, dy)));
             return outRangeMeters >= minRange;
         } else if (mode == SonarDisplayMode::SectorWedge) {
-            const float dx = pt.x - origin.x;
-            const float dy = origin.y - pt.y;
-            const float distPx = keel::sqrt(dx * dx + dy * dy);
+            const keel::f32 dx = pt.x - origin.x;
+            const keel::f32 dy = origin.y - pt.y;
+            const keel::f32 distPx = keel::sqrt(dx * dx + dy * dy);
             if (distPx > maxRadiusPx) return false;
-            const float relDeg = keel::rad_to_deg(keel::atan2(dx, dy));
+            const keel::f32 relDeg = keel::rad_to_deg(keel::atan2(dx, dy));
             if (keel::abs(relDeg) > sectorApertureDeg * 0.5f) return false;
             outRangeMeters = (distPx / maxRadiusPx) * visibleMaxRange;
             outBearingDeg = NormalizeBearingDeg(headingDeg + relDeg);
@@ -189,10 +189,10 @@ struct SonarPlotGeometry {
         } else {
             const Rect inner = GetBScanInnerRect();
             if (!inner.Contains(pt)) return false;
-            const float u = (pt.x - inner.x) / keel::max(1.0f, inner.w);
-            const float v = (inner.Bottom() - pt.y) / keel::max(1.0f, inner.h);
+            const keel::f32 u = (pt.x - inner.x) / keel::max(1.0f, inner.w);
+            const keel::f32 v = (inner.Bottom() - pt.y) / keel::max(1.0f, inner.h);
             outRangeMeters = v * visibleMaxRange;
-            const float relDeg = (u - 0.5f) * sectorApertureDeg;
+            const keel::f32 relDeg = (u - 0.5f) * sectorApertureDeg;
             outBearingDeg = NormalizeBearingDeg(headingDeg + relDeg);
             return outRangeMeters >= minRange;
         }
@@ -200,11 +200,11 @@ struct SonarPlotGeometry {
 };
 
 /// Samples `persistentGrid` with bilinear interpolation in `(beamIdx, rangeBin)` and applies Gain, TVG, and Threshold.
-[[nodiscard]] float SampleProcessedEcho(
+[[nodiscard]] keel::f32 SampleProcessedEcho(
     const SonarViewState& state,
     const SonarViewOptions& opts,
-    float rangeMeters,
-    float bearingDeg
+    keel::f32 rangeMeters,
+    keel::f32 bearingDeg
 ) noexcept {
     if (state.persistentGrid.empty() || state.numBeams == 0 || state.numRangeBins == 0) {
         return 0.0f;
@@ -213,46 +213,46 @@ struct SonarPlotGeometry {
         return 0.0f;
     }
 
-    const float rNorm = keel::clamp(rangeMeters / keel::max(1.0f, opts.maxRangeMeters), 0.0f, 1.0f);
-    const float spanDeg = opts.matrixEndBearingDeg - opts.matrixStartBearingDeg;
-    float beamNorm = 0.0f;
+    const keel::f32 rNorm = keel::clamp(rangeMeters / keel::max(1.0f, opts.maxRangeMeters), 0.0f, 1.0f);
+    const keel::f32 spanDeg = opts.matrixEndBearingDeg - opts.matrixStartBearingDeg;
+    keel::f32 beamNorm = 0.0f;
     if (keel::abs(spanDeg) >= 359.5f) {
         beamNorm = NormalizeBearingDeg(bearingDeg - opts.matrixStartBearingDeg) / 360.0f;
     } else {
-        const float rel = SignedAngleDiffDeg(bearingDeg, opts.headingDeg);
-        const float halfSpan = keel::max(1.0f, keel::abs(spanDeg) * 0.5f);
+        const keel::f32 rel = SignedAngleDiffDeg(bearingDeg, opts.headingDeg);
+        const keel::f32 halfSpan = keel::max(1.0f, keel::abs(spanDeg) * 0.5f);
         if (keel::abs(rel) > halfSpan) return 0.0f;
         beamNorm = (rel + halfSpan) / (2.0f * halfSpan);
     }
 
-    const float bFloat = keel::clamp(beamNorm, 0.0f, 1.0f) * static_cast<float>(state.numBeams - 1);
-    const float rFloat = rNorm * static_cast<float>(state.numRangeBins - 1);
+    const keel::f32 bFloat = keel::clamp(beamNorm, 0.0f, 1.0f) * keel::as<keel::f32>(state.numBeams - 1);
+    const keel::f32 rFloat = rNorm * keel::as<keel::f32>(state.numRangeBins - 1);
 
-    const keel::u32 b0 = static_cast<keel::u32>(bFloat);
+    const keel::u32 b0 = keel::as<keel::u32>(bFloat);
     const keel::u32 b1 = keel::min(state.numBeams - 1, b0 + 1);
-    const float fb = bFloat - static_cast<float>(b0);
+    const keel::f32 fb = bFloat - keel::as<keel::f32>(b0);
 
-    const keel::u32 r0 = static_cast<keel::u32>(rFloat);
+    const keel::u32 r0 = keel::as<keel::u32>(rFloat);
     const keel::u32 r1 = keel::min(state.numRangeBins - 1, r0 + 1);
-    const float fr = rFloat - static_cast<float>(r0);
+    const keel::f32 fr = rFloat - keel::as<keel::f32>(r0);
 
-    const float v00 = state.persistentGrid[b0 * state.numRangeBins + r0];
-    const float v01 = state.persistentGrid[b0 * state.numRangeBins + r1];
-    const float v10 = state.persistentGrid[b1 * state.numRangeBins + r0];
-    const float v11 = state.persistentGrid[b1 * state.numRangeBins + r1];
+    const keel::f32 v00 = state.persistentGrid[b0 * state.numRangeBins + r0];
+    const keel::f32 v01 = state.persistentGrid[b0 * state.numRangeBins + r1];
+    const keel::f32 v10 = state.persistentGrid[b1 * state.numRangeBins + r0];
+    const keel::f32 v11 = state.persistentGrid[b1 * state.numRangeBins + r1];
 
-    const float v0 = v00 + fr * (v01 - v00);
-    const float v1 = v10 + fr * (v11 - v10);
-    float raw = v0 + fb * (v1 - v0);
+    const keel::f32 v0 = v00 + fr * (v01 - v00);
+    const keel::f32 v1 = v10 + fr * (v11 - v10);
+    keel::f32 raw = v0 + fb * (v1 - v0);
 
     // Apply Time-Varied Gain (TVG): compensates spherical spreading + absorption with distance
-    const float tvgBoost = 1.0f + opts.tvgAmount * (1.35f * rNorm + 0.55f * keel::sqrt(rNorm));
+    const keel::f32 tvgBoost = 1.0f + opts.tvgAmount * (1.35f * rNorm + 0.55f * keel::sqrt(rNorm));
     // Apply Receiver Gain (dB -> linear amplitude multiplier)
-    const float gainLinear = keel::pow(10.0f, opts.gainDb / 28.0f);
-    float val = raw * tvgBoost * gainLinear;
+    const keel::f32 gainLinear = keel::pow(10.0f, opts.gainDb / 28.0f);
+    keel::f32 val = raw * tvgBoost * gainLinear;
 
     // Clutter rejection threshold
-    const float thresh = keel::clamp(opts.clutterThreshold, 0.0f, 0.85f);
+    const keel::f32 thresh = keel::clamp(opts.clutterThreshold, 0.0f, 0.85f);
     if (val <= thresh) {
         return 0.0f;
     }
@@ -263,10 +263,10 @@ struct SonarPlotGeometry {
 void DrawCircleOutline(
     ICanvas& canvas,
     Vec2 center,
-    float radiusPx,
+    keel::f32 radiusPx,
     Color fill,
     Color stroke = Color::Transparent(),
-    float strokeWidth = 0.0f
+    keel::f32 strokeWidth = 0.0f
 ) {
     if (radiusPx <= 0.5f) return;
     canvas.DrawRoundRect(
@@ -283,7 +283,7 @@ void DrawClosedPolygon(
     keel::ArrayRef<Vec2> pts,
     Color fill,
     Color stroke,
-    float strokeWidth
+    keel::f32 strokeWidth
 ) {
     if (pts.size() < 3) return;
     if (fill.a > 0) {
@@ -301,19 +301,19 @@ void DrawClosedPolygon(
 void DrawArcPolyline(
     ICanvas& canvas,
     Vec2 center,
-    float radiusPx,
-    float startScreenDeg,
-    float endScreenDeg,
+    keel::f32 radiusPx,
+    keel::f32 startScreenDeg,
+    keel::f32 endScreenDeg,
     Color color,
-    float thickness,
+    keel::f32 thickness,
     keel::i32 segments = 48
 ) {
     if (radiusPx <= 1.0f || segments < 2) return;
     Vec2 prev{};
     for (keel::i32 i = 0; i <= segments; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(segments);
-        const float deg = startScreenDeg + t * (endScreenDeg - startScreenDeg);
-        const float rad = keel::deg_to_rad(deg);
+        const keel::f32 t = keel::as<keel::f32>(i) / keel::as<keel::f32>(segments);
+        const keel::f32 deg = startScreenDeg + t * (endScreenDeg - startScreenDeg);
+        const keel::f32 rad = keel::deg_to_rad(deg);
         const Vec2 pt{center.x + keel::sin(rad) * radiusPx, center.y - keel::cos(rad) * radiusPx};
         if (i > 0) {
             canvas.DrawLine(prev, pt, color, thickness);
@@ -353,11 +353,11 @@ void DrawTargetSymbol(
     // 1. Snail trail (historical positions)
     if (target.trail.size() >= 2) {
         for (keel::usize i = 0; i < target.trail.size(); ++i) {
-            const float alphaFrac = static_cast<float>(i + 1) / static_cast<float>(target.trail.size() + 1);
+            const keel::f32 alphaFrac = keel::as<keel::f32>(i + 1) / keel::as<keel::f32>(target.trail.size() + 1);
             const Vec2 tp = geom.PolarToScreen(target.trail[i].rangeMeters, target.trail[i].bearingDeg);
             if (geom.plotRect.Contains(tp)) {
                 Color tc = symColor;
-                tc.a = static_cast<keel::u8>(alphaFrac * 150.0f);
+                tc.a = keel::as<keel::u8>(alphaFrac * 150.0f);
                 DrawCircleOutline(canvas, tp, 2.2f, tc);
             }
         }
@@ -365,8 +365,8 @@ void DrawTargetSymbol(
 
     // 2. Velocity vector (Course Over Ground / Speed leader line)
     if (target.speedMetersPerSec > 0.05f && geom.mode != SonarDisplayMode::BScan) {
-        const float leaderLenPx = keel::clamp(target.speedMetersPerSec * 14.0f, 12.0f, 38.0f);
-        float courseScreenRad = keel::deg_to_rad(target.courseDeg);
+        const keel::f32 leaderLenPx = keel::clamp(target.speedMetersPerSec * 14.0f, 12.0f, 38.0f);
+        keel::f32 courseScreenRad = keel::deg_to_rad(target.courseDeg);
         if (geom.mode == SonarDisplayMode::SectorWedge) {
             courseScreenRad = keel::deg_to_rad(SignedAngleDiffDeg(target.courseDeg, geom.headingDeg));
         }
@@ -378,7 +378,7 @@ void DrawTargetSymbol(
     }
 
     // 3. Tactical symbol geometry
-    const float r = isSelected ? 7.5f : (isHovered ? 6.8f : 5.8f);
+    const keel::f32 r = isSelected ? 7.5f : (isHovered ? 6.8f : 5.8f);
     if (target.classification == SonarTargetClass::Diver) {
         const keel::StaticArray<Vec2, 4> diamond = {{
             {pos.x, pos.y - r},
@@ -393,7 +393,7 @@ void DrawTargetSymbol(
     } else if (target.classification == SonarTargetClass::UUV) {
         keel::StaticArray<Vec2, 6> hex{};
         for (keel::usize i = 0; i < 6; ++i) {
-            const float a = keel::deg_to_rad(static_cast<float>(i) * 60.0f - 30.0f);
+            const keel::f32 a = keel::deg_to_rad(keel::as<keel::f32>(i) * 60.0f - 30.0f);
             hex[i] = {pos.x + keel::cos(a) * r, pos.y + keel::sin(a) * r};
         }
         Color fill = symColor;
@@ -420,8 +420,8 @@ void DrawTargetSymbol(
 
     // 4. Selection / lock-on corner brackets
     if (isSelected || isHovered) {
-        const float b = r + 4.5f;
-        const float leg = 4.5f;
+        const keel::f32 b = r + 4.5f;
+        const keel::f32 leg = 4.5f;
         const Color lockCol = isSelected ? Color(250, 204, 21, 255) : Color(226, 232, 240, 210);
         canvas.DrawLine({pos.x - b, pos.y - b}, {pos.x - b + leg, pos.y - b}, lockCol, 1.6f);
         canvas.DrawLine({pos.x - b, pos.y - b}, {pos.x - b, pos.y - b + leg}, lockCol, 1.6f);
@@ -444,18 +444,18 @@ void RenderSonarViewNode(const Node* node, ICanvas& canvas, const UiTheme& theme
     const Rect r = node->computedRect;
     if (r.w <= 8.0f || r.h <= 8.0f) return;
 
-    const float radius = opts.border.radius.has_value()
+    const keel::f32 radius = opts.border.radius.has_value()
         ? *opts.border.radius
         : theme.GetRadius(node->uiSize);
     const Color bgConsole = opts.background.Resolve(node->hovered, node->pressed, node->disabled, Color{6, 10, 18, 255});
     const Color borderCol = opts.border.color.Resolve(node->hovered, node->pressed, node->disabled, theme.palette.borderSubtle);
-    const float borderW = (opts.border.width > 0.0f) ? opts.border.width : 1.0f;
+    const keel::f32 borderW = (opts.border.width > 0.0f) ? opts.border.width : 1.0f;
     const Color gridLineCol{56, 189, 248, 48};
     const Color gridMajorCol{56, 189, 248, 95};
     const Color labelTextCol{148, 163, 184, 225};
     const Color accentTextCol{56, 189, 248, 235};
 
-    const float colorbarW = opts.showColorbar ? 52.0f : 0.0f;
+    const keel::f32 colorbarW = opts.showColorbar ? 52.0f : 0.0f;
     const Rect plotRect(
         r.x + 2.0f,
         r.y + 2.0f,
@@ -627,9 +627,9 @@ void main() {
 )";
 
     auto makeSonarGpuDesc = [&](SonarViewState& state) {
-        const float s = canvas.GetScale();
+        const keel::f32 s = canvas.GetScale();
         const Rect bscan = geom.GetBScanInnerRect();
-        const float gainLinear = keel::pow(10.0f, opts.gainDb / 28.0f);
+        const keel::f32 gainLinear = keel::pow(10.0f, opts.gainDb / 28.0f);
 
         ICanvas::GpuShaderPassDesc gpuDesc{};
         gpuDesc.widgetId = node->id.value;
@@ -643,11 +643,11 @@ void main() {
         gpuDesc.fullGeneration = state.gridGeneration;
         gpuDesc.dataNormOffset = 0.0f;
         gpuDesc.dataNormScale = 1.0f;
-        gpuDesc.colormapId = static_cast<keel::u8>(opts.colormap);
+        gpuDesc.colormapId = keel::as<keel::u8>(opts.colormap);
         gpuDesc.lutAbgr256 = GetColormapLutAbgr(opts.colormap);
 
         gpuDesc.params[0] = {geom.origin.x * s, geom.origin.y * s, geom.maxRadiusPx * s, 0.0f};
-        gpuDesc.params[1] = {geom.minRange, geom.visibleMaxRange, opts.maxRangeMeters, static_cast<float>(geom.mode)};
+        gpuDesc.params[1] = {geom.minRange, geom.visibleMaxRange, opts.maxRangeMeters, keel::as<keel::f32>(keel::to_underlying(geom.mode))};
         gpuDesc.params[2] = {opts.matrixStartBearingDeg, opts.matrixEndBearingDeg, geom.headingDeg, geom.sectorApertureDeg};
         gpuDesc.params[3] = {bscan.x * s, bscan.y * s, bscan.w * s, bscan.h * s};
         gpuDesc.params[4] = {gainLinear, opts.tvgAmount, opts.clutterThreshold, 0.0f};
@@ -661,8 +661,8 @@ void main() {
         keel::round(r.h * 2.0f),
         canvas.GetScale(),
         canvas.SupportsGpuShaders(),
-        static_cast<keel::u8>(opts.displayMode),
-        static_cast<keel::u8>(opts.colormap),
+        keel::as<keel::u8>(opts.displayMode),
+        keel::as<keel::u8>(opts.colormap),
         opts.maxRangeMeters,
         opts.minRangeMeters,
         opts.headingDeg,
@@ -714,7 +714,7 @@ void main() {
             const auto gpuDesc = makeSonarGpuDesc(state);
             if (!canvas.DrawGpuShaderPass(gpuDesc, true)) {
                 const auto& lutAbgr = GetColormapLutAbgr(opts.colormap);
-                const float resScale = keel::min(
+                const keel::f32 resScale = keel::min(
                     0.80f,
                     keel::min(
                         560.0f / keel::max(1.0f, plotRect.w),
@@ -724,25 +724,25 @@ void main() {
                 const keel::u32 imgW = keel::max(64u, keel::round_u32(plotRect.w * resScale));
                 const keel::u32 imgH = keel::max(64u, keel::round_u32(plotRect.h * resScale));
                 keel::usize pixelCount = 0;
-                if (keel::checked_mul(static_cast<keel::usize>(imgW), static_cast<keel::usize>(imgH), pixelCount)) {
+                if (keel::checked_mul(keel::as<keel::usize>(imgW), keel::as<keel::usize>(imgH), pixelCount)) {
                     state.cachedImgW = imgW;
                     state.cachedImgH = imgH;
                     state.abgrPixels.resize(pixelCount, 0u);
 
                     const keel::u32 bgAbgr = PackAbgr(bgConsole);
-                    const float stepX = plotRect.w / static_cast<float>(imgW);
-                    const float stepY = plotRect.h / static_cast<float>(imgH);
+                    const keel::f32 stepX = plotRect.w / keel::as<keel::f32>(imgW);
+                    const keel::f32 stepY = plotRect.h / keel::as<keel::f32>(imgH);
 
                     for (keel::u32 py = 0; py < imgH; ++py) {
-                        keel::u32* rowPtr = state.abgrPixels.data() + static_cast<keel::usize>(py) * imgW;
-                        const float sy = plotRect.y + (static_cast<float>(py) + 0.5f) * stepY;
+                        keel::u32* rowPtr = state.abgrPixels.data() + keel::as<keel::usize>(py) * imgW;
+                        const keel::f32 sy = plotRect.y + (keel::as<keel::f32>(py) + 0.5f) * stepY;
                         for (keel::u32 px = 0; px < imgW; ++px) {
-                            const float sx = plotRect.x + (static_cast<float>(px) + 0.5f) * stepX;
-                            float rMeters = 0.0f;
-                            float brgDeg = 0.0f;
+                            const keel::f32 sx = plotRect.x + (keel::as<keel::f32>(px) + 0.5f) * stepX;
+                            keel::f32 rMeters = 0.0f;
+                            keel::f32 brgDeg = 0.0f;
                             if (geom.ScreenToPolar({sx, sy}, rMeters, brgDeg)) {
-                                const float echo = SampleProcessedEcho(state, opts, rMeters, brgDeg);
-                                const keel::usize idx = static_cast<keel::usize>(keel::clamp(echo * 255.0f, 0.0f, 255.0f));
+                                const keel::f32 echo = SampleProcessedEcho(state, opts, rMeters, brgDeg);
+                                const keel::usize idx = keel::as<keel::usize>(keel::clamp(echo * 255.0f, 0.0f, 255.0f));
                                 rowPtr[px] = lutAbgr[idx];
                             } else {
                                 rowPtr[px] = bgAbgr;
@@ -757,8 +757,8 @@ void main() {
 
         // 2. Guard Zone tactical sector overlay
         if (opts.guardZone.enabled) {
-            const float gzMinR = keel::clamp(opts.guardZone.minRangeMeters, 0.0f, geom.visibleMaxRange);
-            const float gzMaxR = keel::clamp(opts.guardZone.maxRangeMeters, gzMinR, geom.visibleMaxRange);
+            const keel::f32 gzMinR = keel::clamp(opts.guardZone.minRangeMeters, 0.0f, geom.visibleMaxRange);
+            const keel::f32 gzMaxR = keel::clamp(opts.guardZone.maxRangeMeters, gzMinR, geom.visibleMaxRange);
             if (gzMaxR > gzMinR + 1.0f) {
                 const Color gzStroke = resp.guardZoneAlarm
                     ? Color(244, 63, 94, 225)
@@ -768,13 +768,13 @@ void main() {
                     : Color(34, 211, 238, 20);
 
                 if (geom.mode == SonarDisplayMode::PPI_360 || geom.mode == SonarDisplayMode::SectorWedge) {
-                    float span = keel::fmod(opts.guardZone.endBearingDeg - opts.guardZone.startBearingDeg + 360.0f, 360.0f);
+                    keel::f32 span = keel::fmod(opts.guardZone.endBearingDeg - opts.guardZone.startBearingDeg + 360.0f, 360.0f);
                     if (span <= 0.01f) span = 360.0f;
 
                     constexpr keel::i32 kArcSteps = 28;
                     for (keel::i32 i = 0; i < kArcSteps; ++i) {
-                        const float b0 = opts.guardZone.startBearingDeg + (static_cast<float>(i) / kArcSteps) * span;
-                        const float b1 = opts.guardZone.startBearingDeg + (static_cast<float>(i + 1) / kArcSteps) * span;
+                        const keel::f32 b0 = opts.guardZone.startBearingDeg + (keel::as<keel::f32>(i) / kArcSteps) * span;
+                        const keel::f32 b1 = opts.guardZone.startBearingDeg + (keel::as<keel::f32>(i + 1) / kArcSteps) * span;
                         const Vec2 outer0 = geom.PolarToScreen(gzMaxR, b0);
                         const Vec2 outer1 = geom.PolarToScreen(gzMaxR, b1);
                         const Vec2 inner0 = geom.PolarToScreen(gzMinR, b0);
@@ -815,8 +815,8 @@ void main() {
         if (geom.mode == SonarDisplayMode::PPI_360) {
             if (opts.showRangeRings) {
                 for (keel::u32 i = 1; i <= ringCount; ++i) {
-                    const float frac = static_cast<float>(i) / static_cast<float>(ringCount);
-                    const float rPx = frac * geom.maxRadiusPx;
+                    const keel::f32 frac = keel::as<keel::f32>(i) / keel::as<keel::f32>(ringCount);
+                    const keel::f32 rPx = frac * geom.maxRadiusPx;
                     const Color c = (i == ringCount) ? gridMajorCol : gridLineCol;
                     DrawCircleOutline(canvas, geom.origin, rPx, Color::Transparent(), c, (i == ringCount) ? 1.5f : 1.0f);
 
@@ -828,7 +828,7 @@ void main() {
 
             if (opts.showBearingDial) {
                 for (keel::i32 deg = 0; deg < 360; deg += 30) {
-                    const float rad = keel::deg_to_rad(static_cast<float>(deg));
+                    const keel::f32 rad = keel::deg_to_rad(keel::as<keel::f32>(deg));
                     const Vec2 inner{geom.origin.x + keel::sin(rad) * (geom.maxRadiusPx * 0.12f),
                                      geom.origin.y - keel::cos(rad) * (geom.maxRadiusPx * 0.12f)};
                     const Vec2 outer{geom.origin.x + keel::sin(rad) * geom.maxRadiusPx,
@@ -838,10 +838,10 @@ void main() {
                 }
 
                 for (keel::i32 deg = 0; deg < 360; deg += 5) {
-                    const float rad = keel::deg_to_rad(static_cast<float>(deg));
+                    const keel::f32 rad = keel::deg_to_rad(keel::as<keel::f32>(deg));
                     const bool major = (deg % 30 == 0);
                     const bool med = (deg % 10 == 0);
-                    const float tickLen = major ? 7.0f : (med ? 4.5f : 2.5f);
+                    const keel::f32 tickLen = major ? 7.0f : (med ? 4.5f : 2.5f);
                     const Vec2 p0{geom.origin.x + keel::sin(rad) * geom.maxRadiusPx,
                                   geom.origin.y - keel::cos(rad) * geom.maxRadiusPx};
                     const Vec2 p1{geom.origin.x + keel::sin(rad) * (geom.maxRadiusPx + tickLen),
@@ -857,7 +857,7 @@ void main() {
                         else if (deg == 270) bStr = "270 W";
                         else bStr = keel::format_buf(bBuf, "%03d", deg);
 
-                        const float labelR = geom.maxRadiusPx + 15.0f;
+                        const keel::f32 labelR = geom.maxRadiusPx + 15.0f;
                         const Vec2 lp{geom.origin.x + keel::sin(rad) * labelR - 14.0f,
                                       geom.origin.y - keel::cos(rad) * labelR - 6.0f};
                         canvas.DrawText(bStr, lp, 10.5f, (deg % 90 == 0) ? accentTextCol : labelTextCol);
@@ -865,11 +865,11 @@ void main() {
                 }
             }
         } else if (geom.mode == SonarDisplayMode::SectorWedge) {
-            const float halfAp = geom.sectorApertureDeg * 0.5f;
+            const keel::f32 halfAp = geom.sectorApertureDeg * 0.5f;
             if (opts.showRangeRings) {
                 for (keel::u32 i = 1; i <= ringCount; ++i) {
-                    const float frac = static_cast<float>(i) / static_cast<float>(ringCount);
-                    const float rPx = frac * geom.maxRadiusPx;
+                    const keel::f32 frac = keel::as<keel::f32>(i) / keel::as<keel::f32>(ringCount);
+                    const keel::f32 rPx = frac * geom.maxRadiusPx;
                     const bool outer = (i == ringCount);
                     DrawArcPolyline(
                         canvas,
@@ -882,7 +882,7 @@ void main() {
                         48
                     );
 
-                    const float rightRad = keel::deg_to_rad(halfAp);
+                    const keel::f32 rightRad = keel::deg_to_rad(halfAp);
                     const Vec2 rp{
                         geom.origin.x + keel::sin(rightRad) * rPx + 6.0f,
                         geom.origin.y - keel::cos(rightRad) * rPx - 6.0f
@@ -900,13 +900,13 @@ void main() {
 
             if (opts.showBearingDial) {
                 const keel::i32 stepDeg = (geom.sectorApertureDeg <= 90.0f) ? 15 : 30;
-                for (float rel = -halfAp; rel <= halfAp + 0.1f; rel += static_cast<float>(stepDeg)) {
-                    const float brg = NormalizeBearingDeg(geom.headingDeg + rel);
+                for (keel::f32 rel = -halfAp; rel <= halfAp + 0.1f; rel += keel::as<keel::f32>(stepDeg)) {
+                    const keel::f32 brg = NormalizeBearingDeg(geom.headingDeg + rel);
                     const Vec2 pOuter = geom.PolarToScreen(geom.visibleMaxRange, brg);
                     const bool centerRay = (keel::abs(rel) < 0.5f);
                     canvas.DrawLine(geom.origin, pOuter, centerRay ? gridMajorCol : gridLineCol, centerRay ? 1.3f : 0.9f);
 
-                    const float rad = keel::deg_to_rad(rel);
+                    const keel::f32 rad = keel::deg_to_rad(rel);
                     const Vec2 lp{
                         geom.origin.x + keel::sin(rad) * (geom.maxRadiusPx + 14.0f) - 12.0f,
                         geom.origin.y - keel::cos(rad) * (geom.maxRadiusPx + 14.0f) - 7.0f
@@ -921,8 +921,8 @@ void main() {
             canvas.DrawRoundRect(inner, 0.0f, Color::Transparent(), gridMajorCol, 1.2f);
             if (opts.showRangeRings) {
                 for (keel::u32 i = 1; i <= ringCount; ++i) {
-                    const float frac = static_cast<float>(i) / static_cast<float>(ringCount);
-                    const float y = inner.Bottom() - frac * inner.h;
+                    const keel::f32 frac = keel::as<keel::f32>(i) / keel::as<keel::f32>(ringCount);
+                    const keel::f32 y = inner.Bottom() - frac * inner.h;
                     canvas.DrawLine({inner.x, y}, {inner.Right(), y}, gridLineCol, 1.0f);
                     char rBuf[32];
                     const keel::StringRef rStr = keel::format_buf(rBuf, "%.0fm", frac * geom.visibleMaxRange);
@@ -930,12 +930,12 @@ void main() {
                 }
             }
             if (opts.showBearingDial) {
-                const float halfAp = geom.sectorApertureDeg * 0.5f;
+                const keel::f32 halfAp = geom.sectorApertureDeg * 0.5f;
                 for (keel::i32 i = 0; i <= 6; ++i) {
-                    const float u = static_cast<float>(i) / 6.0f;
-                    const float x = inner.x + u * inner.w;
+                    const keel::f32 u = keel::as<keel::f32>(i) / 6.0f;
+                    const keel::f32 x = inner.x + u * inner.w;
                     canvas.DrawLine({x, inner.y}, {x, inner.Bottom()}, gridLineCol, 1.0f);
-                    const float brg = NormalizeBearingDeg(geom.headingDeg + (u - 0.5f) * 2.0f * halfAp);
+                    const keel::f32 brg = NormalizeBearingDeg(geom.headingDeg + (u - 0.5f) * 2.0f * halfAp);
                     char bBuf[16];
                     const keel::StringRef bStr = keel::format_buf(bBuf, "%03.0f°", brg);
                     canvas.DrawText(bStr, {x - 12.0f, inner.Bottom() + 4.0f}, 10.0f, labelTextCol);
@@ -954,13 +954,13 @@ void main() {
             const Rect barStrip(colorbarRect.x + 8.0f, colorbarRect.y + 24.0f, 12.0f, keel::max(24.0f, colorbarRect.h - 48.0f));
             DrawColormapBar(canvas, barStrip, opts.colormap, true, false, 2.0f, Color(148, 163, 184, 120));
 
-            const float threshY = barStrip.Bottom() - keel::clamp(opts.clutterThreshold, 0.0f, 0.85f) * barStrip.h;
+            const keel::f32 threshY = barStrip.Bottom() - keel::clamp(opts.clutterThreshold, 0.0f, 0.85f) * barStrip.h;
             canvas.DrawLine({barStrip.x - 3.0f, threshY}, {barStrip.Right() + 3.0f, threshY}, Color(244, 63, 94, 230), 1.8f);
 
             canvas.DrawText("dB", {colorbarRect.x + 8.0f, colorbarRect.y + 6.0f}, 10.0f, accentTextCol);
             for (keel::i32 i = 0; i <= 4; ++i) {
-                const float frac = static_cast<float>(i) / 4.0f;
-                const float y = barStrip.y + frac * barStrip.h;
+                const keel::f32 frac = keel::as<keel::f32>(i) / 4.0f;
+                const keel::f32 y = barStrip.y + frac * barStrip.h;
                 const keel::i32 dbVal = -i * 15;
                 char dbBuf[16];
                 const keel::StringRef dbStr = keel::format_buf(dbBuf, "%d", dbVal);
@@ -1001,20 +1001,20 @@ void main() {
     if (opts.showEblVrm) {
         const Color eblCol{250, 204, 21, 185};
         const Color vrmCol{56, 189, 248, 185};
-        const float vrmR = keel::clamp(resp.vrmRangeMeters, 0.0f, geom.visibleMaxRange);
+        const keel::f32 vrmR = keel::clamp(resp.vrmRangeMeters, 0.0f, geom.visibleMaxRange);
 
         if (geom.mode == SonarDisplayMode::PPI_360) {
             const Vec2 eblEnd = geom.PolarToScreen(geom.visibleMaxRange, resp.eblBearingDeg);
             canvas.DrawLine(geom.origin, eblEnd, eblCol, 1.3f);
-            const float vrmPx = (vrmR / geom.visibleMaxRange) * geom.maxRadiusPx;
+            const keel::f32 vrmPx = (vrmR / geom.visibleMaxRange) * geom.maxRadiusPx;
             DrawCircleOutline(canvas, geom.origin, vrmPx, Color::Transparent(), vrmCol, 1.3f);
         } else if (geom.mode == SonarDisplayMode::SectorWedge) {
-            const float halfAp = geom.sectorApertureDeg * 0.5f;
+            const keel::f32 halfAp = geom.sectorApertureDeg * 0.5f;
             if (keel::abs(SignedAngleDiffDeg(resp.eblBearingDeg, geom.headingDeg)) <= halfAp) {
                 const Vec2 eblEnd = geom.PolarToScreen(geom.visibleMaxRange, resp.eblBearingDeg);
                 canvas.DrawLine(geom.origin, eblEnd, eblCol, 1.3f);
             }
-            const float vrmPx = (vrmR / geom.visibleMaxRange) * geom.maxRadiusPx;
+            const keel::f32 vrmPx = (vrmR / geom.visibleMaxRange) * geom.maxRadiusPx;
             DrawArcPolyline(canvas, geom.origin, vrmPx, -halfAp, +halfAp, vrmCol, 1.3f, 40);
         } else {
             const Rect inner = geom.GetBScanInnerRect();
@@ -1162,20 +1162,20 @@ void main() {
 } // namespace
 
 Vec2 SonarView::Measure(
-    keel::ArrayRef<float> /*polarMatrix*/,
+    keel::ArrayRef<keel::f32> /*polarMatrix*/,
     const SonarViewOptions& opts,
     UiSize /*size*/,
     ICanvas* /*canvas*/,
     const UiTheme& /*theme*/,
-    float availableWidth
+    keel::f32 availableWidth
 ) {
-    float defaultW = 520.0f;
+    keel::f32 defaultW = 520.0f;
     if (opts.width.IsFixed()) {
         defaultW = opts.width.Dp();
     } else if (opts.width.ResolveMode(SizeMode::Stretch) == SizeMode::Stretch && availableWidth > 0.0f) {
         defaultW = availableWidth;
     }
-    const float defaultH = opts.height.IsFixed()
+    const keel::f32 defaultH = opts.height.IsFixed()
         ? opts.height.Dp()
         : 420.0f;
     return {defaultW, defaultH};
@@ -1183,7 +1183,7 @@ Vec2 SonarView::Measure(
 
 SonarViewResponse SonarView::Run(
     Context& ctx,
-    keel::ArrayRef<float> polarMatrix,
+    keel::ArrayRef<keel::f32> polarMatrix,
     const SonarViewOptions& opts,
     keel::SourceLocation loc
 ) {
@@ -1207,7 +1207,7 @@ SonarViewResponse SonarView::Run(
 
     const keel::u32 numBeams = keel::max(8u, opts.numBeams);
     const keel::u32 numBins = keel::max(8u, opts.numRangeBins);
-    const keel::usize totalCells = static_cast<keel::usize>(numBeams) * numBins;
+    const keel::usize totalCells = keel::as<keel::usize>(numBeams) * numBins;
 
     if (!state.initialized || state.numBeams != numBeams || state.numRangeBins != numBins || opts.requestClearPersistence) {
         state.numBeams = numBeams;
@@ -1242,9 +1242,9 @@ SonarViewResponse SonarView::Run(
     }
 
     // 1. Update Polar Persistence Buffer from `polarMatrix`
-    const float persist = keel::clamp(opts.persistence, 0.0f, 0.97f);
+    const keel::f32 persist = keel::clamp(opts.persistence, 0.0f, 0.97f);
     if (polarMatrix.size() >= totalCells) {
-        keel::u64 inHash = detail::HashArgs(opts.sweepAngleDeg, static_cast<keel::u8>(opts.scanMode), persist);
+        keel::u64 inHash = detail::HashArgs(opts.sweepAngleDeg, keel::as<keel::u8>(opts.scanMode), persist);
         const keel::usize step = keel::max<keel::usize>(1, totalCells / 64);
         for (keel::usize i = 0; i < totalCells; i += step) {
             inHash = detail::HashArgs(inHash, polarMatrix[i]);
@@ -1254,30 +1254,30 @@ SonarViewResponse SonarView::Run(
             state.gridGeneration++;
             if (opts.scanMode == SonarScanMode::MultibeamContinuous) {
                 for (keel::usize i = 0; i < totalCells; ++i) {
-                    const float incoming = keel::clamp(polarMatrix[i], 0.0f, 1.0f);
-                    const float decayed = state.persistentGrid[i] * persist;
+                    const keel::f32 incoming = keel::clamp(polarMatrix[i], 0.0f, 1.0f);
+                    const keel::f32 decayed = state.persistentGrid[i] * persist;
                     state.persistentGrid[i] = keel::max(incoming, decayed * 0.92f + incoming * 0.08f);
                 }
             } else {
-                const float frameDecay = 0.965f + 0.032f * persist;
-                const float spanDeg = opts.matrixEndBearingDeg - opts.matrixStartBearingDeg;
-                const float halfSweep = keel::max(3.0f, opts.sweepBeamWidthDeg * 0.5f);
+                const keel::f32 frameDecay = 0.965f + 0.032f * persist;
+                const keel::f32 spanDeg = opts.matrixEndBearingDeg - opts.matrixStartBearingDeg;
+                const keel::f32 halfSweep = keel::max(3.0f, opts.sweepBeamWidthDeg * 0.5f);
                 for (keel::u32 b = 0; b < numBeams; ++b) {
-                    const float beamNorm = static_cast<float>(b) / static_cast<float>(keel::max(1u, numBeams - 1));
-                    float beamBrg = 0.0f;
+                    const keel::f32 beamNorm = keel::as<keel::f32>(b) / keel::as<keel::f32>(keel::max(1u, numBeams - 1));
+                    keel::f32 beamBrg = 0.0f;
                     if (keel::abs(spanDeg) >= 359.5f) {
                         beamBrg = NormalizeBearingDeg(opts.matrixStartBearingDeg + beamNorm * 360.0f);
                     } else {
                         beamBrg = NormalizeBearingDeg(opts.headingDeg + (beamNorm - 0.5f) * spanDeg);
                     }
-                    const float diff = keel::abs(SignedAngleDiffDeg(beamBrg, opts.sweepAngleDeg));
+                    const keel::f32 diff = keel::abs(SignedAngleDiffDeg(beamBrg, opts.sweepAngleDeg));
                     const bool inBeam = (diff <= halfSweep);
-                    float* row = state.persistentGrid.data() + static_cast<keel::usize>(b) * numBins;
-                    const float* srcRow = polarMatrix.data() + static_cast<keel::usize>(b) * numBins;
+                    keel::f32* row = state.persistentGrid.data() + keel::as<keel::usize>(b) * numBins;
+                    const keel::f32* srcRow = polarMatrix.data() + keel::as<keel::usize>(b) * numBins;
                     for (keel::u32 r = 0; r < numBins; ++r) {
-                        float v = row[r] * frameDecay;
+                        keel::f32 v = row[r] * frameDecay;
                         if (inBeam) {
-                            const float beamWeight = 1.0f - (diff / (halfSweep + 0.1f)) * 0.35f;
+                            const keel::f32 beamWeight = 1.0f - (diff / (halfSweep + 0.1f)) * 0.35f;
                             v = keel::max(v, keel::clamp(srcRow[r] * beamWeight, 0.0f, 1.0f));
                         }
                         row[r] = v;
@@ -1289,7 +1289,7 @@ SonarViewResponse SonarView::Run(
     state.prevSweepAngleDeg = opts.sweepAngleDeg;
 
     // 2. Interactive Input Handling
-    const float colorbarW = opts.showColorbar ? 52.0f : 0.0f;
+    const keel::f32 colorbarW = opts.showColorbar ? 52.0f : 0.0f;
     const Rect plotRect(
         activeRect.x + 2.0f,
         activeRect.y + 2.0f,
@@ -1305,7 +1305,7 @@ SonarViewResponse SonarView::Run(
     if (hovered && plotRect.Contains(mousePos)) {
         const Vec2 wheel = ctx.GetMouseWheel();
         if (keel::abs(wheel.y) > 0.01f) {
-            const float factor = (wheel.y > 0.0f) ? 0.88f : 1.14f;
+            const keel::f32 factor = (wheel.y > 0.0f) ? 0.88f : 1.14f;
             state.rangeZoom = keel::clamp(state.rangeZoom * factor, 0.2f, 1.0f);
             if (opts.viewRangeZoom) *opts.viewRangeZoom = state.rangeZoom;
             geom = SonarPlotGeometry::Compute(plotRect, opts, state.rangeZoom);
@@ -1314,23 +1314,23 @@ SonarViewResponse SonarView::Run(
             resp.changed = true;
         }
 
-        float curR = 0.0f;
-        float curBrg = 0.0f;
+        keel::f32 curR = 0.0f;
+        keel::f32 curBrg = 0.0f;
         if (geom.ScreenToPolar(mousePos, curR, curBrg)) {
             resp.cursorInsidePlot = true;
             resp.cursorRangeMeters = curR;
             resp.cursorBearingDeg = curBrg;
-            const float echoNorm = SampleProcessedEcho(state, opts, curR, curBrg);
+            const keel::f32 echoNorm = SampleProcessedEcho(state, opts, curR, curBrg);
             resp.cursorEchoDb = -60.0f + echoNorm * 60.0f;
         }
 
-        float bestDistSq = 18.0f * 18.0f;
+        keel::f32 bestDistSq = 18.0f * 18.0f;
         for (const auto& t : opts.targets) {
             if (t.rangeMeters > geom.visibleMaxRange) continue;
             const Vec2 tp = geom.PolarToScreen(t.rangeMeters, t.bearingDeg);
-            const float dx = mousePos.x - tp.x;
-            const float dy = mousePos.y - tp.y;
-            const float d2 = dx * dx + dy * dy;
+            const keel::f32 dx = mousePos.x - tp.x;
+            const keel::f32 dy = mousePos.y - tp.y;
+            const keel::f32 d2 = dx * dx + dy * dy;
             if (d2 <= bestDistSq) {
                 bestDistSq = d2;
                 resp.hoveredTargetId = t.id;
@@ -1338,7 +1338,7 @@ SonarViewResponse SonarView::Run(
         }
 
         const Vec2 eblMarkerPt = geom.PolarToScreen(state.vrmRangeMeters, state.eblBearingDeg);
-        const float eblDistSq = (mousePos.x - eblMarkerPt.x) * (mousePos.x - eblMarkerPt.x) +
+        const keel::f32 eblDistSq = (mousePos.x - eblMarkerPt.x) * (mousePos.x - eblMarkerPt.x) +
                                 (mousePos.y - eblMarkerPt.y) * (mousePos.y - eblMarkerPt.y);
 
         if (ctx.IsMouseClicked()) {
@@ -1357,8 +1357,8 @@ SonarViewResponse SonarView::Run(
 
     if (state.eblVrmDragging) {
         if (ctx.IsMouseDown()) {
-            float curR = 0.0f;
-            float curBrg = 0.0f;
+            keel::f32 curR = 0.0f;
+            keel::f32 curBrg = 0.0f;
             if (geom.ScreenToPolar(mousePos, curR, curBrg)) {
                 state.vrmRangeMeters = keel::clamp(curR, 5.0f, geom.visibleMaxRange);
                 state.eblBearingDeg = curBrg;
@@ -1408,7 +1408,7 @@ SonarViewResponse SonarView::Run(
             targetsFp,
             t.id,
             t.callsign,
-            static_cast<keel::u8>(t.classification),
+            keel::as<keel::u8>(t.classification),
             t.rangeMeters,
             t.bearingDeg,
             t.speedMetersPerSec,
@@ -1417,7 +1417,7 @@ SonarViewResponse SonarView::Run(
         );
     }
 
-    Node* node = ctx.CreateNode(static_cast<NodeType>(static_cast<keel::u16>(NodeType::User) + 2u), id);
+    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 2u), id);
     auto* payload = ctx.AllocPayload<SonarViewPayload>();
     payload->opts = opts;
     payload->opts.targets = state.renderedTargets.as_ref();
@@ -1439,9 +1439,9 @@ SonarViewResponse SonarView::Run(
     node->visualHash = detail::HashArgs(
         gridFp,
         targetsFp,
-        static_cast<keel::u8>(opts.displayMode),
-        static_cast<keel::u8>(opts.scanMode),
-        static_cast<keel::u8>(opts.colormap),
+        keel::as<keel::u8>(opts.displayMode),
+        keel::as<keel::u8>(opts.scanMode),
+        keel::as<keel::u8>(opts.colormap),
         opts.gainDb,
         opts.tvgAmount,
         opts.clutterThreshold,
@@ -1465,7 +1465,7 @@ SonarViewResponse SonarView::Run(
         opts.border
     );
 
-    node->measureFn = [](const Node* n, float availableWidth, ICanvas* c, const UiTheme& th) noexcept -> Vec2 {
+    node->measureFn = [](const Node* n, keel::f32 availableWidth, ICanvas* c, const UiTheme& th) noexcept -> Vec2 {
         const auto* p = n->As<SonarViewPayload>();
         if (!p) return {0.0f, 0.0f};
         SonarViewOptions effOpts = p->opts;

@@ -21,38 +21,38 @@ struct WaterfallViewState {
     keel::u32 headRow{0};
     keel::u32 validRows{0};
 
-    keel::Array<float> ringBufferDb{};
-    keel::Array<float> liveSliceDb{};
-    keel::Array<float> peakHoldDb{};
-    keel::Array<float> averageDb{};
+    keel::Array<keel::f32> ringBufferDb{};
+    keel::Array<keel::f32> liveSliceDb{};
+    keel::Array<keel::f32> peakHoldDb{};
+    keel::Array<keel::f32> averageDb{};
     keel::Array<WaterfallTrack> renderedTracks{};
 
     keel::u64 fullGeneration{1};
     keel::u64 sliceGeneration{1};
     keel::u64 lastSliceSequence{0};
-    double lastUpdateTimeSec{0.0};
+    keel::f64 lastUpdateTimeSec{0.0};
     bool initialized{false};
 
     // Interactive viewport & operator state
-    float viewMinX{0.0f};
-    float viewMaxX{24000.0f};
-    float lastDomainMinX{0.0f};
-    float lastDomainMaxX{24000.0f};
+    keel::f32 viewMinX{0.0f};
+    keel::f32 viewMaxX{24000.0f};
+    keel::f32 lastDomainMinX{0.0f};
+    keel::f32 lastDomainMaxX{24000.0f};
 
     bool hasSelectionBand{false};
-    float selectionStartX{0.0f};
-    float selectionEndX{0.0f};
+    keel::f32 selectionStartX{0.0f};
+    keel::f32 selectionEndX{0.0f};
     bool draggingSelection{false};
-    float dragAnchorX{0.0f};
+    keel::f32 dragAnchorX{0.0f};
 
     bool draggingPan{false};
-    float panGrabMouseX{0.0f};
-    float panGrabMinX{0.0f};
-    float panGrabMaxX{0.0f};
+    keel::f32 panGrabMouseX{0.0f};
+    keel::f32 panGrabMinX{0.0f};
+    keel::f32 panGrabMaxX{0.0f};
 
     bool draggingThreshold{false};
-    float thresholdGateDb{-62.0f};
-    float harmonicFundamentalX{1200.0f};
+    keel::f32 thresholdGateDb{-62.0f};
+    keel::f32 harmonicFundamentalX{1200.0f};
     keel::i32 selectedTrackId{-1};
 
     // CPU fallback raster buffer (only allocated when GPU shaders are disabled)
@@ -91,56 +91,56 @@ struct WaterfallGeometry {
     Rect wfRect{};
     Rect xRulerRect{};
     Rect colorbarRect{};
-    float leftMargin{52.0f};
-    float rightMargin{52.0f};
-    float topHeaderH{0.0f};
-    float bottomRulerH{24.0f};
-    float splitGap{6.0f};
+    keel::f32 leftMargin{52.0f};
+    keel::f32 rightMargin{52.0f};
+    keel::f32 topHeaderH{0.0f};
+    keel::f32 bottomRulerH{24.0f};
+    keel::f32 splitGap{6.0f};
 
-    float domainMinX{0.0f};
-    float domainMaxX{24000.0f};
-    float viewMinX{0.0f};
-    float viewMaxX{24000.0f};
-    float dbFloor{-110.0f};
-    float dbCeil{0.0f};
-    float historyDurationSec{30.0f};
+    keel::f32 domainMinX{0.0f};
+    keel::f32 domainMaxX{24000.0f};
+    keel::f32 viewMinX{0.0f};
+    keel::f32 viewMaxX{24000.0f};
+    keel::f32 dbFloor{-110.0f};
+    keel::f32 dbCeil{0.0f};
+    keel::f32 historyDurationSec{30.0f};
     bool invertTimeAxis{false};
     bool hasTrace{true};
     bool hasWaterfall{true};
 
-    [[nodiscard]] float XToScreen(float xVal) const noexcept {
-        const float span = keel::max(1e-5f, viewMaxX - viewMinX);
-        const float u = (xVal - viewMinX) / span;
+    [[nodiscard]] keel::f32 XToScreen(keel::f32 xVal) const noexcept {
+        const keel::f32 span = keel::max(1e-5f, viewMaxX - viewMinX);
+        const keel::f32 u = (xVal - viewMinX) / span;
         const Rect& ref = hasWaterfall ? wfRect : traceRect;
         return ref.x + u * ref.w;
     }
 
-    [[nodiscard]] float ScreenToX(float px) const noexcept {
+    [[nodiscard]] keel::f32 ScreenToX(keel::f32 px) const noexcept {
         const Rect& ref = hasWaterfall ? wfRect : traceRect;
-        const float u = keel::clamp((px - ref.x) / keel::max(1.0f, ref.w), 0.0f, 1.0f);
+        const keel::f32 u = keel::clamp((px - ref.x) / keel::max(1.0f, ref.w), 0.0f, 1.0f);
         return viewMinX + u * (viewMaxX - viewMinX);
     }
 
-    [[nodiscard]] float DbToTraceY(float db) const noexcept {
-        const float span = keel::max(1.0f, dbCeil - dbFloor);
-        const float norm = keel::clamp((db - dbFloor) / span, 0.0f, 1.0f);
+    [[nodiscard]] keel::f32 DbToTraceY(keel::f32 db) const noexcept {
+        const keel::f32 span = keel::max(1.0f, dbCeil - dbFloor);
+        const keel::f32 norm = keel::clamp((db - dbFloor) / span, 0.0f, 1.0f);
         return traceRect.Bottom() - norm * traceRect.h;
     }
 
-    [[nodiscard]] float TraceYToDb(float py) const noexcept {
-        const float norm = keel::clamp((traceRect.Bottom() - py) / keel::max(1.0f, traceRect.h), 0.0f, 1.0f);
+    [[nodiscard]] keel::f32 TraceYToDb(keel::f32 py) const noexcept {
+        const keel::f32 norm = keel::clamp((traceRect.Bottom() - py) / keel::max(1.0f, traceRect.h), 0.0f, 1.0f);
         return dbFloor + norm * (dbCeil - dbFloor);
     }
 
-    [[nodiscard]] float TimeAgoToWaterfallY(float timeAgoSec) const noexcept {
-        const float norm = keel::clamp(timeAgoSec / keel::max(0.1f, historyDurationSec), 0.0f, 1.0f);
-        const float v = invertTimeAxis ? (1.0f - norm) : norm;
+    [[nodiscard]] keel::f32 TimeAgoToWaterfallY(keel::f32 timeAgoSec) const noexcept {
+        const keel::f32 norm = keel::clamp(timeAgoSec / keel::max(0.1f, historyDurationSec), 0.0f, 1.0f);
+        const keel::f32 v = invertTimeAxis ? (1.0f - norm) : norm;
         return wfRect.y + v * wfRect.h;
     }
 
-    [[nodiscard]] float WaterfallYToTimeAgo(float py) const noexcept {
-        const float v = keel::clamp((py - wfRect.y) / keel::max(1.0f, wfRect.h), 0.0f, 1.0f);
-        const float norm = invertTimeAxis ? (1.0f - v) : v;
+    [[nodiscard]] keel::f32 WaterfallYToTimeAgo(keel::f32 py) const noexcept {
+        const keel::f32 v = keel::clamp((py - wfRect.y) / keel::max(1.0f, wfRect.h), 0.0f, 1.0f);
+        const keel::f32 norm = invertTimeAxis ? (1.0f - v) : v;
         return norm * historyDurationSec;
     }
 };
@@ -148,8 +148,8 @@ struct WaterfallGeometry {
 [[nodiscard]] WaterfallGeometry ComputeWaterfallGeometry(
     const Rect& bounds,
     const WaterfallViewOptions& opts,
-    float viewMinX,
-    float viewMaxX
+    keel::f32 viewMinX,
+    keel::f32 viewMaxX
 ) noexcept {
     WaterfallGeometry g{};
     g.outerRect = bounds;
@@ -168,17 +168,17 @@ struct WaterfallGeometry {
     g.historyDurationSec = keel::max(1.0f, opts.historyDurationSec);
     g.invertTimeAxis = opts.invertTimeAxis;
 
-    const float plotX = bounds.x + g.leftMargin;
-    const float plotW = keel::max(40.0f, bounds.w - g.leftMargin - g.rightMargin);
-    const float availY = bounds.y + g.topHeaderH;
-    const float availH = keel::max(40.0f, bounds.h - g.topHeaderH - g.bottomRulerH);
+    const keel::f32 plotX = bounds.x + g.leftMargin;
+    const keel::f32 plotW = keel::max(40.0f, bounds.w - g.leftMargin - g.rightMargin);
+    const keel::f32 availY = bounds.y + g.topHeaderH;
+    const keel::f32 availH = keel::max(40.0f, bounds.h - g.topHeaderH - g.bottomRulerH);
 
     if (opts.viewLayout == WaterfallLayout::SplitTraceAndWaterfall) {
         g.hasTrace = true;
         g.hasWaterfall = true;
-        const float ratio = keel::clamp(opts.topTraceHeightRatio, 0.18f, 0.55f);
-        const float traceH = keel::max(54.0f, keel::floor((availH - g.splitGap) * ratio));
-        const float wfH = keel::max(60.0f, availH - traceH - g.splitGap);
+        const keel::f32 ratio = keel::clamp(opts.topTraceHeightRatio, 0.18f, 0.55f);
+        const keel::f32 traceH = keel::max(54.0f, keel::floor((availH - g.splitGap) * ratio));
+        const keel::f32 wfH = keel::max(60.0f, availH - traceH - g.splitGap);
         g.traceRect = Rect(plotX, availY, plotW, traceH);
         g.wfRect = Rect(plotX, availY + traceH + g.splitGap, plotW, wfH);
     } else if (opts.viewLayout == WaterfallLayout::WaterfallOnly) {
@@ -193,7 +193,7 @@ struct WaterfallGeometry {
         g.wfRect = Rect(plotX, availY + availH, plotW, 0.0f);
     }
 
-    const float bottomY = g.hasWaterfall ? g.wfRect.Bottom() : g.traceRect.Bottom();
+    const keel::f32 bottomY = g.hasWaterfall ? g.wfRect.Bottom() : g.traceRect.Bottom();
     g.xRulerRect = Rect(plotX, bottomY, plotW, g.bottomRulerH);
     g.colorbarRect = opts.showColorbar
         ? Rect(plotX + plotW + 4.0f, availY, keel::max(0.0f, g.rightMargin - 8.0f), availH)
@@ -201,7 +201,7 @@ struct WaterfallGeometry {
     return g;
 }
 
-[[nodiscard]] keel::FixedString<32> FormatXValue(float xVal, WaterfallMode mode, float visibleSpan) noexcept {
+[[nodiscard]] keel::FixedString<32> FormatXValue(keel::f32 xVal, WaterfallMode mode, keel::f32 visibleSpan) noexcept {
     if (mode == WaterfallMode::DoaBtr) {
         if (visibleSpan < 25.0f) {
             return keel::format_fixed<32>("%+06.1f°", xVal);
@@ -209,7 +209,7 @@ struct WaterfallGeometry {
         return keel::format_fixed<32>("%+04.0f°", xVal);
     }
 
-    const float absX = keel::abs(xVal);
+    const keel::f32 absX = keel::abs(xVal);
     if (absX >= 1000000.0f) {
         return keel::format_fixed<32>("%.3f MHz", xVal / 1000000.0f);
     }
@@ -222,44 +222,44 @@ struct WaterfallGeometry {
     return keel::format_fixed<32>("%.0f Hz", xVal);
 }
 
-[[nodiscard]] float SampleRingBufferDb(
+[[nodiscard]] keel::f32 SampleRingBufferDb(
     const WaterfallViewState& state,
     const WaterfallViewOptions& opts,
-    float xVal,
-    float timeAgoSec
+    keel::f32 xVal,
+    keel::f32 timeAgoSec
 ) noexcept {
     if (state.ringBufferDb.empty() || state.numBins == 0 || state.historyRows == 0 || state.validRows == 0) {
         return opts.dbFloor;
     }
-    const float domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
-    const float uNorm = keel::clamp((xVal - opts.minX) / domainSpan, 0.0f, 1.0f);
+    const keel::f32 domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
+    const keel::f32 uNorm = keel::clamp((xVal - opts.minX) / domainSpan, 0.0f, 1.0f);
     const keel::u32 binIdx = keel::min(
         state.numBins - 1,
-        keel::round_u32(uNorm * static_cast<float>(state.numBins - 1))
+        keel::round_u32(uNorm * keel::as<keel::f32>(state.numBins - 1))
     );
 
-    const float ageNorm = keel::clamp(timeAgoSec / keel::max(0.1f, opts.historyDurationSec), 0.0f, 1.0f);
+    const keel::f32 ageNorm = keel::clamp(timeAgoSec / keel::max(0.1f, opts.historyDurationSec), 0.0f, 1.0f);
     const keel::u32 ageRows = keel::min(
         state.validRows - 1,
-        keel::round_u32(ageNorm * static_cast<float>(state.historyRows - 1))
+        keel::round_u32(ageNorm * keel::as<keel::f32>(state.historyRows - 1))
     );
     const keel::u32 rowIdx = (state.headRow + state.historyRows - (ageRows % state.historyRows)) % state.historyRows;
 
-    return state.ringBufferDb[static_cast<keel::usize>(rowIdx) * state.numBins + binIdx] + opts.gainDb;
+    return state.ringBufferDb[keel::as<keel::usize>(rowIdx) * state.numBins + binIdx] + opts.gainDb;
 }
 
-[[nodiscard]] float SampleTraceVectorDb(
-    keel::ArrayRef<float> vec,
+[[nodiscard]] keel::f32 SampleTraceVectorDb(
+    keel::ArrayRef<keel::f32> vec,
     const WaterfallViewOptions& opts,
-    float xVal
+    keel::f32 xVal
 ) noexcept {
     if (vec.empty()) return opts.dbFloor;
-    const float domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
-    const float uNorm = keel::clamp((xVal - opts.minX) / domainSpan, 0.0f, 1.0f);
-    const float fIdx = uNorm * static_cast<float>(vec.size() - 1);
-    const keel::usize i0 = static_cast<keel::usize>(keel::floor(fIdx));
+    const keel::f32 domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
+    const keel::f32 uNorm = keel::clamp((xVal - opts.minX) / domainSpan, 0.0f, 1.0f);
+    const keel::f32 fIdx = uNorm * keel::as<keel::f32>(vec.size() - 1);
+    const keel::usize i0 = keel::as<keel::usize>(keel::floor(fIdx));
     const keel::usize i1 = keel::min(vec.size() - 1, i0 + 1);
-    const float frac = fIdx - static_cast<float>(i0);
+    const keel::f32 frac = fIdx - keel::as<keel::f32>(i0);
     return (vec[i0] + frac * (vec[i1] - vec[i0])) + opts.gainDb;
 }
 
@@ -275,23 +275,23 @@ void DrawWaterfallViewNode(const Node* node, ICanvas& canvas, const UiTheme& the
     if (r.w <= 20.0f || r.h <= 20.0f) return;
 
     const WaterfallGeometry geom = ComputeWaterfallGeometry(r, opts, resp.visibleMinX, resp.visibleMaxX);
-    const float radius = opts.border.radius.has_value()
+    const keel::f32 radius = opts.border.radius.has_value()
         ? *opts.border.radius
         : theme.GetRadius(node->uiSize);
 
     const Color bgOuter = opts.background.Resolve(node->hovered, node->pressed, node->disabled, Color{7, 10, 19, 255});
     const Color bgPanel{5, 8, 16, 255};
     const Color borderCol = opts.border.color.Resolve(node->hovered, node->pressed, node->disabled, Color{30, 41, 59, 255});
-    const float borderW = (opts.border.width > 0.0f) ? opts.border.width : 1.2f;
+    const keel::f32 borderW = (opts.border.width > 0.0f) ? opts.border.width : 1.2f;
     const Color gridLineCol{56, 189, 248, 34};
     const Color gridMajorCol{56, 189, 248, 72};
     const Color labelTextCol{148, 163, 184, 225};
     const Color accentTextCol{56, 189, 248, 245};
 
-    const auto packFloat = [](float v) noexcept -> keel::u64 {
+    const auto packFloat = [](keel::f32 v) noexcept -> keel::u64 {
         keel::u32 bits = 0;
-        std::memcpy(&bits, &v, sizeof(float));
-        return static_cast<keel::u64>(bits);
+        std::memcpy(&bits, &v, sizeof(keel::f32));
+        return keel::as<keel::u64>(bits);
     };
 
     keel::u64 staticKey = 14695981039346656037ULL;
@@ -304,9 +304,9 @@ void DrawWaterfallViewNode(const Node* node, ICanvas& canvas, const UiTheme& the
     mixKey(packFloat(r.w));
     mixKey(packFloat(r.h));
     mixKey(packFloat(canvas.GetScale()));
-    mixKey(static_cast<keel::u64>(opts.mode));
-    mixKey(static_cast<keel::u64>(opts.viewLayout));
-    mixKey(static_cast<keel::u64>(opts.colormap));
+    mixKey(keel::as<keel::u64>(opts.mode));
+    mixKey(keel::as<keel::u64>(opts.viewLayout));
+    mixKey(keel::as<keel::u64>(opts.colormap));
     mixKey(packFloat(geom.viewMinX));
     mixKey(packFloat(geom.viewMaxX));
     mixKey(packFloat(geom.dbFloor));
@@ -316,15 +316,15 @@ void DrawWaterfallViewNode(const Node* node, ICanvas& canvas, const UiTheme& the
     mixKey(opts.invertTimeAxis ? 1ULL : 0ULL);
     mixKey(opts.showColorbar ? 1ULL : 0ULL);
     mixKey(opts.showGrid ? 1ULL : 0ULL);
-    mixKey(static_cast<keel::u64>(theme.mode));
+    mixKey(keel::as<keel::u64>(theme.mode));
     mixKey(bgOuter.ToUint32());
     mixKey(borderCol.ToUint32());
     mixKey(packFloat(borderW));
     mixKey(packFloat(radius));
 
-    const float domainSpan = keel::max(1e-5f, geom.domainMaxX - geom.domainMinX);
-    const float xMinNorm = keel::clamp((geom.viewMinX - geom.domainMinX) / domainSpan, 0.0f, 1.0f);
-    const float xMaxNorm = keel::clamp((geom.viewMaxX - geom.domainMinX) / domainSpan, 0.0f, 1.0f);
+    const keel::f32 domainSpan = keel::max(1e-5f, geom.domainMaxX - geom.domainMinX);
+    const keel::f32 xMinNorm = keel::clamp((geom.viewMinX - geom.domainMinX) / domainSpan, 0.0f, 1.0f);
+    const keel::f32 xMaxNorm = keel::clamp((geom.viewMaxX - geom.domainMinX) / domainSpan, 0.0f, 1.0f);
 
     static constexpr keel::StringRef kWaterfallFragGlsl = R"(
 #ifdef GL_ES
@@ -406,7 +406,7 @@ void main() {
 
     auto buildGpuDesc = [&]() noexcept -> ICanvas::GpuShaderPassDesc {
         ICanvas::GpuShaderPassDesc desc{};
-        desc.widgetId = static_cast<keel::u64>(node->id.value);
+        desc.widgetId = keel::as<keel::u64>(node->id.value);
         desc.shader = {
             .shaderId = "guikit.waterfall.v1",
             .glslEs2 = kWaterfallFragGlsl
@@ -420,14 +420,14 @@ void main() {
         desc.headRow = state.headRow;
         desc.dataNormOffset = -140.0f;
         desc.dataNormScale = 160.0f;
-        desc.colormapId = static_cast<keel::u8>(opts.colormap);
+        desc.colormapId = keel::as<keel::u8>(opts.colormap);
         desc.lutAbgr256 = GetColormapLutAbgr(opts.colormap);
 
         desc.params[0] = {geom.dbFloor, geom.dbCeil, xMinNorm, xMaxNorm};
         desc.params[1] = {opts.gainDb, state.thresholdGateDb, opts.gateSuppression, opts.gamma};
         desc.params[2] = {
-            static_cast<float>(state.headRow % keel::max(1u, state.historyRows)),
-            static_cast<float>(keel::min(state.validRows, state.historyRows)),
+            keel::as<keel::f32>(state.headRow % keel::max(1u, state.historyRows)),
+            keel::as<keel::f32>(keel::min(state.validRows, state.historyRows)),
             opts.invertTimeAxis ? 1.0f : 0.0f,
             0.0f
         };
@@ -462,9 +462,9 @@ void main() {
             if (opts.showGrid) {
                 constexpr keel::i32 kDbRows = 4;
                 for (keel::i32 i = 0; i <= kDbRows; ++i) {
-                    const float frac = static_cast<float>(i) / static_cast<float>(kDbRows);
-                    const float y = geom.traceRect.y + frac * geom.traceRect.h;
-                    const float dbVal = geom.dbCeil - frac * (geom.dbCeil - geom.dbFloor);
+                    const keel::f32 frac = keel::as<keel::f32>(i) / keel::as<keel::f32>(kDbRows);
+                    const keel::f32 y = geom.traceRect.y + frac * geom.traceRect.h;
+                    const keel::f32 dbVal = geom.dbCeil - frac * (geom.dbCeil - geom.dbFloor);
                     if (i > 0 && i < kDbRows) {
                         canvas.DrawLine({geom.traceRect.x, y}, {geom.traceRect.Right(), y}, gridLineCol, 1.0f);
                     }
@@ -475,8 +475,8 @@ void main() {
 
                 constexpr keel::i32 kXCols = 8;
                 for (keel::i32 c = 1; c < kXCols; ++c) {
-                    const float u = static_cast<float>(c) / static_cast<float>(kXCols);
-                    const float x = geom.traceRect.x + u * geom.traceRect.w;
+                    const keel::f32 u = keel::as<keel::f32>(c) / keel::as<keel::f32>(kXCols);
+                    const keel::f32 x = geom.traceRect.x + u * geom.traceRect.w;
                     const bool isCenter = (c == kXCols / 2);
                     canvas.DrawLine({x, geom.traceRect.y}, {x, geom.traceRect.Bottom()},
                                     isCenter ? gridMajorCol : gridLineCol, isCenter ? 1.2f : 1.0f);
@@ -499,42 +499,42 @@ void main() {
                 // CPU Software Fallback when GPU switch is disabled
                 if (!state.ringBufferDb.empty() && state.numBins > 0 && state.historyRows > 0) {
                     const auto& lutAbgr = GetColormapLutAbgr(opts.colormap);
-                    const keel::u32 fbW = keel::clamp(static_cast<keel::u32>(geom.wfRect.w * 0.5f), 64u, 320u);
-                    const keel::u32 fbH = keel::clamp(static_cast<keel::u32>(geom.wfRect.h * 0.5f), 48u, 200u);
+                    const keel::u32 fbW = keel::clamp(keel::as<keel::u32>(geom.wfRect.w * 0.5f), 64u, 320u);
+                    const keel::u32 fbH = keel::clamp(keel::as<keel::u32>(geom.wfRect.h * 0.5f), 48u, 200u);
                     keel::usize pixelCount = 0;
-                    if (keel::checked_mul(static_cast<keel::usize>(fbW), static_cast<keel::usize>(fbH), pixelCount)) {
+                    if (keel::checked_mul(keel::as<keel::usize>(fbW), keel::as<keel::usize>(fbH), pixelCount)) {
                         state.cpuFallbackPixels.resize(pixelCount, 0u);
-                        const float dbSpan = keel::max(1.0f, geom.dbCeil - geom.dbFloor);
-                        const float gamma = keel::max(0.25f, opts.gamma);
+                        const keel::f32 dbSpan = keel::max(1.0f, geom.dbCeil - geom.dbFloor);
+                        const keel::f32 gamma = keel::max(0.25f, opts.gamma);
                         const keel::u32 bgPanelAbgr = PackAbgr(bgPanel);
                         for (keel::u32 py = 0; py < fbH; ++py) {
-                            const float v = static_cast<float>(py) / static_cast<float>(keel::max(1u, fbH - 1));
-                            const float timeUv = opts.invertTimeAxis ? (1.0f - v) : v;
-                            const keel::u32 ageRow = keel::round_u32(timeUv * static_cast<float>(state.historyRows - 1));
+                            const keel::f32 v = keel::as<keel::f32>(py) / keel::as<keel::f32>(keel::max(1u, fbH - 1));
+                            const keel::f32 timeUv = opts.invertTimeAxis ? (1.0f - v) : v;
+                            const keel::u32 ageRow = keel::round_u32(timeUv * keel::as<keel::f32>(state.historyRows - 1));
                             if (ageRow >= state.validRows) {
                                 keel::fill(
-                                    keel::MutArrayRef<keel::u32>(state.cpuFallbackPixels.data() + static_cast<keel::usize>(py) * fbW, fbW),
+                                    keel::MutArrayRef<keel::u32>(state.cpuFallbackPixels.data() + keel::as<keel::usize>(py) * fbW, fbW),
                                     bgPanelAbgr
                                 );
                                 continue;
                             }
                             const keel::u32 ringRow = (state.headRow + state.historyRows - (ageRow % state.historyRows)) % state.historyRows;
-                            const float* rowPtr = state.ringBufferDb.data() + static_cast<keel::usize>(ringRow) * state.numBins;
-                            keel::u32* dstRow = state.cpuFallbackPixels.data() + static_cast<keel::usize>(py) * fbW;
+                            const keel::f32* rowPtr = state.ringBufferDb.data() + keel::as<keel::usize>(ringRow) * state.numBins;
+                            keel::u32* dstRow = state.cpuFallbackPixels.data() + keel::as<keel::usize>(py) * fbW;
                             for (keel::u32 px = 0; px < fbW; ++px) {
-                                const float u = xMinNorm + (static_cast<float>(px) / static_cast<float>(keel::max(1u, fbW - 1))) * (xMaxNorm - xMinNorm);
+                                const keel::f32 u = xMinNorm + (keel::as<keel::f32>(px) / keel::as<keel::f32>(keel::max(1u, fbW - 1))) * (xMaxNorm - xMinNorm);
                                 const keel::u32 bin = keel::min(
                                     state.numBins - 1,
-                                    keel::round_u32(u * static_cast<float>(state.numBins - 1))
+                                    keel::round_u32(u * keel::as<keel::f32>(state.numBins - 1))
                                 );
-                                const float dbVal = rowPtr[bin] + opts.gainDb;
-                                float norm = keel::clamp((dbVal - geom.dbFloor) / dbSpan, 0.0f, 1.0f);
+                                const keel::f32 dbVal = rowPtr[bin] + opts.gainDb;
+                                keel::f32 norm = keel::clamp((dbVal - geom.dbFloor) / dbSpan, 0.0f, 1.0f);
                                 if (opts.gateSuppression > 0.001f && dbVal < state.thresholdGateDb) {
-                                    const float soft = keel::clamp((dbVal - (state.thresholdGateDb - 10.0f)) / 10.0f, 0.0f, 1.0f);
+                                    const keel::f32 soft = keel::clamp((dbVal - (state.thresholdGateDb - 10.0f)) / 10.0f, 0.0f, 1.0f);
                                     norm *= (1.0f - opts.gateSuppression) + opts.gateSuppression * (soft * 0.25f);
                                 }
                                 norm = keel::pow(norm, gamma);
-                                const keel::usize lutIdx = static_cast<keel::usize>(keel::clamp(norm * 255.0f, 0.0f, 255.0f));
+                                const keel::usize lutIdx = keel::as<keel::usize>(keel::clamp(norm * 255.0f, 0.0f, 255.0f));
                                 dstRow[px] = lutAbgr[lutIdx];
                             }
                         }
@@ -548,9 +548,9 @@ void main() {
             // Time-axis Y labels & waterfall graticule
             constexpr keel::i32 kTimeTicks = 6;
             for (keel::i32 t = 0; t <= kTimeTicks; ++t) {
-                const float frac = static_cast<float>(t) / static_cast<float>(kTimeTicks);
-                const float timeAgo = frac * geom.historyDurationSec;
-                const float y = geom.TimeAgoToWaterfallY(timeAgo);
+                const keel::f32 frac = keel::as<keel::f32>(t) / keel::as<keel::f32>(kTimeTicks);
+                const keel::f32 timeAgo = frac * geom.historyDurationSec;
+                const keel::f32 y = geom.TimeAgoToWaterfallY(timeAgo);
                 if (opts.showGrid && t > 0 && t < kTimeTicks) {
                     canvas.DrawLine({geom.wfRect.x, y}, {geom.wfRect.Right(), y}, gridLineCol, 1.0f);
                 }
@@ -564,8 +564,8 @@ void main() {
             if (opts.showGrid) {
                 constexpr keel::i32 kXCols = 8;
                 for (keel::i32 c = 1; c < kXCols; ++c) {
-                    const float u = static_cast<float>(c) / static_cast<float>(kXCols);
-                    const float x = geom.wfRect.x + u * geom.wfRect.w;
+                    const keel::f32 u = keel::as<keel::f32>(c) / keel::as<keel::f32>(kXCols);
+                    const keel::f32 x = geom.wfRect.x + u * geom.wfRect.w;
                     const bool isCenter = (c == kXCols / 2);
                     canvas.DrawLine({x, geom.wfRect.y}, {x, geom.wfRect.Bottom()},
                                     isCenter ? gridMajorCol : gridLineCol, isCenter ? 1.2f : 1.0f);
@@ -575,16 +575,16 @@ void main() {
 
         // 3. Bottom X-Axis Ruler (Frequency Hz/kHz/MHz or Azimuth Bearing deg)
         {
-            const float visSpan = geom.viewMaxX - geom.viewMinX;
+            const keel::f32 visSpan = geom.viewMaxX - geom.viewMinX;
             constexpr keel::i32 kXCols = 8;
             for (keel::i32 c = 0; c <= kXCols; ++c) {
-                const float u = static_cast<float>(c) / static_cast<float>(kXCols);
-                const float x = geom.xRulerRect.x + u * geom.xRulerRect.w;
-                const float xVal = geom.viewMinX + u * visSpan;
+                const keel::f32 u = keel::as<keel::f32>(c) / keel::as<keel::f32>(kXCols);
+                const keel::f32 x = geom.xRulerRect.x + u * geom.xRulerRect.w;
+                const keel::f32 xVal = geom.viewMinX + u * visSpan;
                 canvas.DrawLine({x, geom.xRulerRect.y}, {x, geom.xRulerRect.y + 4.5f}, labelTextCol, 1.1f);
 
                 const auto xBuf = FormatXValue(xVal, opts.mode, visSpan);
-                const float textOff = (c == 0) ? 0.0f : ((c == kXCols) ? -42.0f : -20.0f);
+                const keel::f32 textOff = (c == 0) ? 0.0f : ((c == kXCols) ? -42.0f : -20.0f);
                 canvas.DrawText(xBuf, {x + textOff, geom.xRulerRect.y + 6.0f}, 10.0f,
                                 (c == kXCols / 2) ? accentTextCol : labelTextCol);
             }
@@ -603,9 +603,9 @@ void main() {
 
             canvas.DrawText("dB", {geom.colorbarRect.x + 7.0f, geom.colorbarRect.y + 4.0f}, 9.5f, accentTextCol);
             for (keel::i32 i = 0; i <= 4; ++i) {
-                const float frac = static_cast<float>(i) / 4.0f;
-                const float y = barStrip.y + frac * barStrip.h;
-                const float dbVal = geom.dbCeil - frac * (geom.dbCeil - geom.dbFloor);
+                const keel::f32 frac = keel::as<keel::f32>(i) / 4.0f;
+                const keel::f32 y = barStrip.y + frac * barStrip.h;
+                const keel::f32 dbVal = geom.dbCeil - frac * (geom.dbCeil - geom.dbFloor);
                 char dbBuf[16];
                 const keel::StringRef dbStr = keel::format_buf(dbBuf, "%.0f", dbVal);
                 canvas.DrawText(dbStr, {barStrip.Right() + 3.0f, y - 5.0f}, 9.0f, labelTextCol);
@@ -629,8 +629,8 @@ void main() {
     if (opts.showColorbar && geom.colorbarRect.w >= 18.0f) {
         const Rect barStrip(geom.colorbarRect.x + 7.0f, geom.colorbarRect.y + 20.0f,
                             11.0f, keel::max(24.0f, geom.colorbarRect.h - 32.0f));
-        const float gateNorm = keel::clamp((state.thresholdGateDb - geom.dbFloor) / keel::max(1.0f, geom.dbCeil - geom.dbFloor), 0.0f, 1.0f);
-        const float gateY = barStrip.Bottom() - gateNorm * barStrip.h;
+        const keel::f32 gateNorm = keel::clamp((state.thresholdGateDb - geom.dbFloor) / keel::max(1.0f, geom.dbCeil - geom.dbFloor), 0.0f, 1.0f);
+        const keel::f32 gateY = barStrip.Bottom() - gateNorm * barStrip.h;
         canvas.DrawLine({barStrip.x - 3.0f, gateY}, {barStrip.Right() + 3.0f, gateY}, Color(244, 63, 94, 240), 2.0f);
     }
 
@@ -640,10 +640,10 @@ void main() {
 
         // Selected Band / Sector Highlight in Trace Panel
         if (resp.hasSelectionBand) {
-            const float sx0 = keel::clamp(geom.XToScreen(resp.selectionStartX), geom.traceRect.x, geom.traceRect.Right());
-            const float sx1 = keel::clamp(geom.XToScreen(resp.selectionEndX), geom.traceRect.x, geom.traceRect.Right());
-            const float left = keel::min(sx0, sx1);
-            const float width = keel::abs(sx1 - sx0);
+            const keel::f32 sx0 = keel::clamp(geom.XToScreen(resp.selectionStartX), geom.traceRect.x, geom.traceRect.Right());
+            const keel::f32 sx1 = keel::clamp(geom.XToScreen(resp.selectionEndX), geom.traceRect.x, geom.traceRect.Right());
+            const keel::f32 left = keel::min(sx0, sx1);
+            const keel::f32 width = keel::abs(sx1 - sx0);
             if (width > 1.0f) {
                 canvas.DrawRect(Rect(left, geom.traceRect.y, width, geom.traceRect.h), Color(56, 189, 248, 36));
                 canvas.DrawLine({left, geom.traceRect.y}, {left, geom.traceRect.Bottom()}, Color(56, 189, 248, 210), 1.3f);
@@ -654,9 +654,9 @@ void main() {
         // Harmonic Comb Lines in Trace Panel
         if (opts.showHarmonicComb && state.harmonicFundamentalX > 0.0f) {
             for (keel::i32 h = 1; h <= 6; ++h) {
-                const float hx = state.harmonicFundamentalX * static_cast<float>(h);
+                const keel::f32 hx = state.harmonicFundamentalX * keel::as<keel::f32>(h);
                 if (hx >= geom.viewMinX && hx <= geom.viewMaxX) {
-                    const float px = geom.XToScreen(hx);
+                    const keel::f32 px = geom.XToScreen(hx);
                     const Color hc = (h == 1) ? Color(250, 204, 21, 210) : Color(250, 204, 21, 120);
                     canvas.DrawLine({px, geom.traceRect.y}, {px, geom.traceRect.Bottom()}, hc, (h == 1) ? 1.5f : 1.0f);
                     char hBuf[12];
@@ -666,14 +666,14 @@ void main() {
             }
         }
 
-        const keel::i32 numSteps = keel::clamp(static_cast<keel::i32>(geom.traceRect.w / 2.5f), 64, 360);
-        auto drawTraceCurve = [&](keel::ArrayRef<float> vec, Color strokeCol, float strokeW, bool fillBars) {
+        const keel::i32 numSteps = keel::clamp(keel::as<keel::i32>(geom.traceRect.w / 2.5f), 64, 360);
+        auto drawTraceCurve = [&](keel::ArrayRef<keel::f32> vec, Color strokeCol, keel::f32 strokeW, bool fillBars) {
             if (vec.empty()) return;
             Vec2 prevPt{};
             for (keel::i32 s = 0; s <= numSteps; ++s) {
-                const float u = static_cast<float>(s) / static_cast<float>(numSteps);
-                const float xVal = geom.viewMinX + u * (geom.viewMaxX - geom.viewMinX);
-                const float dbVal = SampleTraceVectorDb(vec, opts, xVal);
+                const keel::f32 u = keel::as<keel::f32>(s) / keel::as<keel::f32>(numSteps);
+                const keel::f32 xVal = geom.viewMinX + u * (geom.viewMaxX - geom.viewMinX);
+                const keel::f32 dbVal = SampleTraceVectorDb(vec, opts, xVal);
                 const Vec2 pt{geom.traceRect.x + u * geom.traceRect.w, geom.DbToTraceY(dbVal)};
                 if (fillBars && (s % 2 == 0)) {
                     const Color barCol(strokeCol.r, strokeCol.g, strokeCol.b, 28);
@@ -701,7 +701,7 @@ void main() {
 
         // Interactive Detection Threshold Gate Line
         if (opts.showThresholdGate) {
-            const float gateY = geom.DbToTraceY(state.thresholdGateDb);
+            const keel::f32 gateY = geom.DbToTraceY(state.thresholdGateDb);
             const Color gateCol = state.draggingThreshold ? Color(250, 204, 21, 245) : Color(244, 63, 94, 205);
             canvas.DrawLine({geom.traceRect.x, gateY}, {geom.traceRect.Right(), gateY}, gateCol, 1.4f);
 
@@ -715,25 +715,25 @@ void main() {
         // Automatic Peak / DOA Lobe Detection & Callout Reticles
         if (opts.showPeakMarkers && state.liveSliceDb.size() >= 8) {
             struct PeakCandidate {
-                float xVal;
-                float dbVal;
+                keel::f32 xVal;
+                keel::f32 dbVal;
             };
             keel::SmallArray<PeakCandidate, 32> peaks;
             const keel::usize n = state.liveSliceDb.size();
             const keel::usize minSepBins = keel::max<keel::usize>(4, n / 28);
             for (keel::usize i = 2; i + 2 < n; ++i) {
-                const float db = state.liveSliceDb[i] + opts.gainDb;
+                const keel::f32 db = state.liveSliceDb[i] + opts.gainDb;
                 if (db < state.thresholdGateDb) continue;
                 if (db >= state.liveSliceDb[i - 1] + opts.gainDb &&
                     db >= state.liveSliceDb[i + 1] + opts.gainDb &&
                     db > state.liveSliceDb[i - 2] + opts.gainDb &&
                     db > state.liveSliceDb[i + 2] + opts.gainDb) {
-                    const float xVal = geom.domainMinX + (static_cast<float>(i) / static_cast<float>(n - 1)) * (geom.domainMaxX - geom.domainMinX);
+                    const keel::f32 xVal = geom.domainMinX + (keel::as<keel::f32>(i) / keel::as<keel::f32>(n - 1)) * (geom.domainMaxX - geom.domainMinX);
                     if (xVal < geom.viewMinX || xVal > geom.viewMaxX) continue;
                     bool merged = false;
                     for (auto& existing : peaks) {
-                        const float existBin = ((existing.xVal - geom.domainMinX) / domainSpan) * static_cast<float>(n - 1);
-                        if (keel::abs(static_cast<float>(i) - existBin) < static_cast<float>(minSepBins)) {
+                        const keel::f32 existBin = ((existing.xVal - geom.domainMinX) / domainSpan) * keel::as<keel::f32>(n - 1);
+                        if (keel::abs(keel::as<keel::f32>(i) - existBin) < keel::as<keel::f32>(minSepBins)) {
                             if (db > existing.dbVal) {
                                 existing.xVal = xVal;
                                 existing.dbVal = db;
@@ -760,17 +760,17 @@ void main() {
                 const auto xStr = FormatXValue(peaks[k].xVal, opts.mode, geom.viewMaxX - geom.viewMinX);
                 char pkLabel[64];
                 const keel::StringRef pkStr = keel::format_buf(pkLabel, "%s (%.0fdB)", xStr, peaks[k].dbVal);
-                const float lx = keel::clamp(pkPt.x - 24.0f, geom.traceRect.x + 4.0f, geom.traceRect.Right() - 96.0f);
-                const float ly = keel::max(geom.traceRect.y + 3.0f, pkPt.y - 17.0f);
+                const keel::f32 lx = keel::clamp(pkPt.x - 24.0f, geom.traceRect.x + 4.0f, geom.traceRect.Right() - 96.0f);
+                const keel::f32 ly = keel::max(geom.traceRect.y + 3.0f, pkPt.y - 17.0f);
                 canvas.DrawText(pkStr, {lx, ly}, 9.2f, pkCol);
             }
         }
 
         // Synchronized Cursor Hairline in Trace Panel
         if (resp.cursorInside) {
-            const float cx = geom.XToScreen(resp.cursorX);
+            const keel::f32 cx = geom.XToScreen(resp.cursorX);
             canvas.DrawLine({cx, geom.traceRect.y}, {cx, geom.traceRect.Bottom()}, Color(255, 255, 255, 165), 1.0f);
-            const float cy = geom.DbToTraceY(resp.cursorLiveDb);
+            const keel::f32 cy = geom.DbToTraceY(resp.cursorLiveDb);
             canvas.DrawRoundRect(Rect(cx - 3.5f, cy - 3.5f, 7.0f, 7.0f), 3.5f, Color(56, 189, 248, 255), Color(255, 255, 255, 240), 1.2f);
         }
 
@@ -783,10 +783,10 @@ void main() {
 
         // Selected Band / Sector Highlight in Waterfall
         if (resp.hasSelectionBand) {
-            const float sx0 = keel::clamp(geom.XToScreen(resp.selectionStartX), geom.wfRect.x, geom.wfRect.Right());
-            const float sx1 = keel::clamp(geom.XToScreen(resp.selectionEndX), geom.wfRect.x, geom.wfRect.Right());
-            const float left = keel::min(sx0, sx1);
-            const float width = keel::abs(sx1 - sx0);
+            const keel::f32 sx0 = keel::clamp(geom.XToScreen(resp.selectionStartX), geom.wfRect.x, geom.wfRect.Right());
+            const keel::f32 sx1 = keel::clamp(geom.XToScreen(resp.selectionEndX), geom.wfRect.x, geom.wfRect.Right());
+            const keel::f32 left = keel::min(sx0, sx1);
+            const keel::f32 width = keel::abs(sx1 - sx0);
             if (width > 1.0f) {
                 canvas.DrawRect(Rect(left, geom.wfRect.y, width, geom.wfRect.h), Color(56, 189, 248, 28));
                 canvas.DrawLine({left, geom.wfRect.y}, {left, geom.wfRect.Bottom()}, Color(56, 189, 248, 210), 1.3f);
@@ -797,9 +797,9 @@ void main() {
         // Harmonic Comb Lines in Waterfall
         if (opts.showHarmonicComb && state.harmonicFundamentalX > 0.0f) {
             for (keel::i32 h = 1; h <= 6; ++h) {
-                const float hx = state.harmonicFundamentalX * static_cast<float>(h);
+                const keel::f32 hx = state.harmonicFundamentalX * keel::as<keel::f32>(h);
                 if (hx >= geom.viewMinX && hx <= geom.viewMaxX) {
-                    const float px = geom.XToScreen(hx);
+                    const keel::f32 px = geom.XToScreen(hx);
                     const Color hc = (h == 1) ? Color(250, 204, 21, 175) : Color(250, 204, 21, 95);
                     canvas.DrawLine({px, geom.wfRect.y}, {px, geom.wfRect.Bottom()}, hc, 1.0f);
                 }
@@ -824,7 +824,7 @@ void main() {
 
                 // Draw historical trajectory polyline & gate corridor
                 if (trk.history.size() >= 2) {
-                    const float gateHalfPx = (trk.gateWidth * 0.5f / keel::max(1e-5f, geom.viewMaxX - geom.viewMinX)) * geom.wfRect.w;
+                    const keel::f32 gateHalfPx = (trk.gateWidth * 0.5f / keel::max(1e-5f, geom.viewMaxX - geom.viewMinX)) * geom.wfRect.w;
                     for (keel::usize i = 0; i + 1 < trk.history.size(); ++i) {
                         const auto& p0 = trk.history[i];
                         const auto& p1 = trk.history[i + 1];
@@ -845,12 +845,12 @@ void main() {
                 // Draw current track head reticle at t = 0s
                 if (trk.currentX >= geom.viewMinX && trk.currentX <= geom.viewMaxX) {
                     const Vec2 headPt{geom.XToScreen(trk.currentX), geom.TimeAgoToWaterfallY(0.0f) + (opts.invertTimeAxis ? -8.0f : 8.0f)};
-                    const float sz = (isSel || isHov) ? 6.5f : 5.2f;
+                    const keel::f32 sz = (isSel || isHov) ? 6.5f : 5.2f;
                     canvas.DrawTriangle({headPt.x, headPt.y - sz}, {headPt.x - sz, headPt.y}, {headPt.x + sz, headPt.y}, trkCol);
                     canvas.DrawTriangle({headPt.x, headPt.y + sz}, {headPt.x - sz, headPt.y}, {headPt.x + sz, headPt.y}, trkCol);
 
                     // Drift rate prediction vector (5 seconds projection)
-                    const float projX = trk.currentX - trk.driftRatePerSec * 4.0f;
+                    const keel::f32 projX = trk.currentX - trk.driftRatePerSec * 4.0f;
                     const Vec2 vecEnd{geom.XToScreen(projX), headPt.y + (opts.invertTimeAxis ? -22.0f : 22.0f)};
                     canvas.DrawLine(headPt, vecEnd, Color(255, 255, 255, 210), 1.4f);
 
@@ -860,9 +860,9 @@ void main() {
                     const keel::StringRef tagStr = (opts.mode == WaterfallMode::DoaBtr)
                         ? keel::format_buf(tagBuf, "%s %s (%+.1f°/s)", trk.callsign, xStr, trk.driftRatePerSec)
                         : keel::format_buf(tagBuf, "%s %s (%.0fdB)", trk.callsign, xStr, trk.levelDb);
-                    const float tagW = 148.0f;
-                    const float tagX = keel::clamp(headPt.x + 9.0f, geom.wfRect.x + 4.0f, geom.wfRect.Right() - tagW - 4.0f);
-                    const float tagY = keel::clamp(headPt.y - 7.0f, geom.wfRect.y + 4.0f, geom.wfRect.Bottom() - 20.0f);
+                    const keel::f32 tagW = 148.0f;
+                    const keel::f32 tagX = keel::clamp(headPt.x + 9.0f, geom.wfRect.x + 4.0f, geom.wfRect.Right() - tagW - 4.0f);
+                    const keel::f32 tagY = keel::clamp(headPt.y - 7.0f, geom.wfRect.y + 4.0f, geom.wfRect.Bottom() - 20.0f);
                     canvas.DrawRoundRect(Rect(tagX, tagY, tagW, 17.0f), 4.0f, Color(9, 14, 26, 220), trkCol, isSel ? 1.4f : 1.0f);
                     canvas.DrawText(tagStr, {tagX + 5.0f, tagY + 2.5f}, 9.2f, trkCol);
                 }
@@ -871,11 +871,11 @@ void main() {
 
         // Synchronized Crosshair & Live Readout Tooltip in Waterfall
         if (resp.cursorInside) {
-            const float cx = geom.XToScreen(resp.cursorX);
+            const keel::f32 cx = geom.XToScreen(resp.cursorX);
             canvas.DrawLine({cx, geom.wfRect.y}, {cx, geom.wfRect.Bottom()}, Color(255, 255, 255, 165), 1.0f);
 
             if (resp.cursorInWaterfall) {
-                const float cy = geom.TimeAgoToWaterfallY(resp.cursorTimeAgoSec);
+                const keel::f32 cy = geom.TimeAgoToWaterfallY(resp.cursorTimeAgoSec);
                 canvas.DrawLine({geom.wfRect.x, cy}, {geom.wfRect.Right(), cy}, Color(255, 255, 255, 130), 1.0f);
                 canvas.DrawRoundRect(Rect(cx - 4.0f, cy - 4.0f, 8.0f, 8.0f), 4.0f, Color::Transparent(), Color(250, 204, 21, 245), 1.4f);
 
@@ -885,10 +885,10 @@ void main() {
                     tipBuf, "%s  |  -%.1fs  |  WF: %+.1f dB  (Live: %+.1f dB)",
                     xStr, resp.cursorTimeAgoSec, resp.cursorWaterfallDb, resp.cursorLiveDb
                 );
-                const float boxW = 248.0f;
-                const float boxH = 20.0f;
-                const float bx = (cx + 12.0f + boxW <= geom.wfRect.Right()) ? (cx + 12.0f) : (cx - boxW - 12.0f);
-                const float by = keel::clamp(cy - 24.0f, geom.wfRect.y + 6.0f, geom.wfRect.Bottom() - boxH - 6.0f);
+                const keel::f32 boxW = 248.0f;
+                const keel::f32 boxH = 20.0f;
+                const keel::f32 bx = (cx + 12.0f + boxW <= geom.wfRect.Right()) ? (cx + 12.0f) : (cx - boxW - 12.0f);
+                const keel::f32 by = keel::clamp(cy - 24.0f, geom.wfRect.y + 6.0f, geom.wfRect.Bottom() - boxH - 6.0f);
                 canvas.DrawRoundRect(Rect(bx, by, boxW, boxH), 4.0f, Color(9, 13, 24, 232), Color(56, 189, 248, 180), 1.0f);
                 canvas.DrawText(tipStr, {bx + 7.0f, by + 4.0f}, 9.5f, Color(241, 245, 249, 250));
             }
@@ -939,20 +939,20 @@ void main() {
 } // namespace
 
 Vec2 WaterfallView::Measure(
-    keel::ArrayRef<float> /*latestSliceDb*/,
+    keel::ArrayRef<keel::f32> /*latestSliceDb*/,
     const WaterfallViewOptions& opts,
     UiSize /*size*/,
     ICanvas* /*canvas*/,
     const UiTheme& /*theme*/,
-    float availableWidth
+    keel::f32 availableWidth
 ) {
-    float defaultW = 520.0f;
+    keel::f32 defaultW = 520.0f;
     if (opts.width.IsFixed()) {
         defaultW = opts.width.Dp();
     } else if (opts.width.ResolveMode(SizeMode::Stretch) == SizeMode::Stretch && availableWidth > 0.0f) {
         defaultW = availableWidth;
     }
-    const float defaultH = opts.height.IsFixed()
+    const keel::f32 defaultH = opts.height.IsFixed()
         ? opts.height.Dp()
         : 420.0f;
     return {defaultW, defaultH};
@@ -960,7 +960,7 @@ Vec2 WaterfallView::Measure(
 
 WaterfallViewResponse WaterfallView::Run(
     Context& ctx,
-    keel::ArrayRef<float> latestSliceDb,
+    keel::ArrayRef<keel::f32> latestSliceDb,
     const WaterfallViewOptions& opts,
     keel::SourceLocation loc
 ) {
@@ -969,7 +969,7 @@ WaterfallViewResponse WaterfallView::Run(
     const UiSize size = opts.size;
     const bool effDisabled = opts.disabled || ctx.IsDisabled();
 
-    Node* node = ctx.CreateNode(static_cast<NodeType>(static_cast<keel::u16>(NodeType::User) + 3u), id);
+    Node* node = ctx.CreateNode(static_cast<NodeType>(keel::as<keel::u16>(NodeType::User) + 3u), id);
     auto* payload = ctx.AllocPayload<WaterfallViewPayload>();
     payload->opts = opts;
     payload->opts.tooltip = ctx.AllocText(opts.tooltip);
@@ -979,9 +979,9 @@ WaterfallViewResponse WaterfallView::Run(
 
     const keel::u32 numBins = keel::max(16u, opts.numBins);
     const keel::u32 historyRows = keel::max(16u, opts.historyRows);
-    const double nowSec = ctx.GetCurrentTime();
-    const float dtSec = (state.lastUpdateTimeSec > 0.0)
-        ? static_cast<float>(keel::clamp(nowSec - state.lastUpdateTimeSec, 0.0, 0.25))
+    const keel::f64 nowSec = ctx.GetCurrentTime();
+    const keel::f32 dtSec = (state.lastUpdateTimeSec > 0.0)
+        ? keel::as<keel::f32>(keel::clamp(nowSec - state.lastUpdateTimeSec, 0.0, 0.25))
         : 0.016f;
     state.lastUpdateTimeSec = nowSec;
 
@@ -992,40 +992,40 @@ WaterfallViewResponse WaterfallView::Run(
     if (dimsChanged || opts.requestClearHistory) {
         state.numBins = numBins;
         state.historyRows = historyRows;
-        state.ringBufferDb.assign(static_cast<keel::usize>(historyRows) * numBins, opts.dbFloor);
+        state.ringBufferDb.assign(keel::as<keel::usize>(historyRows) * numBins, opts.dbFloor);
         state.liveSliceDb.assign(numBins, opts.dbFloor);
         state.peakHoldDb.assign(numBins, opts.dbFloor);
         state.averageDb.assign(numBins, opts.dbFloor);
         state.headRow = historyRows - 1;
         state.validRows = 0;
 
-        if (opts.initialHistoryMatrix.size() >= static_cast<keel::usize>(historyRows) * numBins) {
+        if (opts.initialHistoryMatrix.size() >= keel::as<keel::usize>(historyRows) * numBins) {
             // Bulk preload: initialHistoryMatrix row 0 = newest (t = 0s), row (historyRows - 1) = oldest
             for (keel::u32 age = 0; age < historyRows; ++age) {
                 const keel::u32 ringRow = (state.headRow + historyRows - age) % historyRows;
-                const float* srcRow = opts.initialHistoryMatrix.data() + static_cast<keel::usize>(age) * numBins;
-                float* dstRow = state.ringBufferDb.data() + static_cast<keel::usize>(ringRow) * numBins;
-                std::memcpy(dstRow, srcRow, static_cast<keel::usize>(numBins) * sizeof(float));
+                const keel::f32* srcRow = opts.initialHistoryMatrix.data() + keel::as<keel::usize>(age) * numBins;
+                keel::f32* dstRow = state.ringBufferDb.data() + keel::as<keel::usize>(ringRow) * numBins;
+                std::memcpy(dstRow, srcRow, keel::as<keel::usize>(numBins) * sizeof(keel::f32));
             }
             state.validRows = historyRows;
-            std::memcpy(state.liveSliceDb.data(), opts.initialHistoryMatrix.data(), static_cast<keel::usize>(numBins) * sizeof(float));
-            std::memcpy(state.peakHoldDb.data(), state.liveSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
-            std::memcpy(state.averageDb.data(), state.liveSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
+            std::memcpy(state.liveSliceDb.data(), opts.initialHistoryMatrix.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            std::memcpy(state.peakHoldDb.data(), state.liveSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            std::memcpy(state.averageDb.data(), state.liveSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
 
             const keel::u32 scanRows = keel::min(historyRows, 48u);
             for (keel::u32 age = 1; age < scanRows; ++age) {
-                const float* srcRow = opts.initialHistoryMatrix.data() + static_cast<keel::usize>(age) * numBins;
+                const keel::f32* srcRow = opts.initialHistoryMatrix.data() + keel::as<keel::usize>(age) * numBins;
                 for (keel::u32 b = 0; b < numBins; ++b) {
                     state.peakHoldDb[b] = keel::max(state.peakHoldDb[b], srcRow[b]);
                     state.averageDb[b] = state.averageDb[b] * 0.9f + srcRow[b] * 0.1f;
                 }
             }
         } else if (latestSliceDb.size() >= numBins) {
-            std::memcpy(state.ringBufferDb.data() + static_cast<keel::usize>(state.headRow) * numBins,
-                        latestSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
-            std::memcpy(state.liveSliceDb.data(), latestSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
-            std::memcpy(state.peakHoldDb.data(), latestSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
-            std::memcpy(state.averageDb.data(), latestSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
+            std::memcpy(state.ringBufferDb.data() + keel::as<keel::usize>(state.headRow) * numBins,
+                        latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            std::memcpy(state.liveSliceDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            std::memcpy(state.peakHoldDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            std::memcpy(state.averageDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
             state.validRows = 1;
         }
 
@@ -1037,14 +1037,14 @@ WaterfallViewResponse WaterfallView::Run(
         // Streaming O(1) Ring-Buffer Advance: write only the single new row at headRow!
         state.headRow = (state.headRow + 1) % historyRows;
         state.validRows = keel::min(historyRows, state.validRows + 1);
-        float* dstRow = state.ringBufferDb.data() + static_cast<keel::usize>(state.headRow) * numBins;
-        std::memcpy(dstRow, latestSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
-        std::memcpy(state.liveSliceDb.data(), latestSliceDb.data(), static_cast<keel::usize>(numBins) * sizeof(float));
+        keel::f32* dstRow = state.ringBufferDb.data() + keel::as<keel::usize>(state.headRow) * numBins;
+        std::memcpy(dstRow, latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+        std::memcpy(state.liveSliceDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
 
-        const float decayStep = keel::max(0.0f, opts.peakDecayDbPerSec) * dtSec;
-        const float alpha = keel::clamp(opts.averageAlpha, 0.01f, 1.0f);
+        const keel::f32 decayStep = keel::max(0.0f, opts.peakDecayDbPerSec) * dtSec;
+        const keel::f32 alpha = keel::clamp(opts.averageAlpha, 0.01f, 1.0f);
         for (keel::u32 b = 0; b < numBins; ++b) {
-            const float v = latestSliceDb[b];
+            const keel::f32 v = latestSliceDb[b];
             state.peakHoldDb[b] = keel::max(state.peakHoldDb[b] - decayStep, v);
             state.averageDb[b] += alpha * (v - state.averageDb[b]);
         }
@@ -1104,14 +1104,14 @@ WaterfallViewResponse WaterfallView::Run(
         // 1. Mouse Wheel X-Axis Zoom centered on cursorX
         const Vec2 wheel = ctx.GetMouseWheel();
         if (keel::abs(wheel.y) > 0.01f) {
-            const float cursorX = geom.ScreenToX(mousePos.x);
-            const float domainSpan = keel::max(1e-3f, opts.maxX - opts.minX);
-            const float curSpan = keel::max(1e-3f, state.viewMaxX - state.viewMinX);
-            const float zoomFactor = (wheel.y > 0.0f) ? 0.80f : 1.25f;
-            const float newSpan = keel::clamp(curSpan * zoomFactor, domainSpan / 32.0f, domainSpan);
-            const float rel = (cursorX - state.viewMinX) / curSpan;
-            float newMin = cursorX - rel * newSpan;
-            float newMax = newMin + newSpan;
+            const keel::f32 cursorX = geom.ScreenToX(mousePos.x);
+            const keel::f32 domainSpan = keel::max(1e-3f, opts.maxX - opts.minX);
+            const keel::f32 curSpan = keel::max(1e-3f, state.viewMaxX - state.viewMinX);
+            const keel::f32 zoomFactor = (wheel.y > 0.0f) ? 0.80f : 1.25f;
+            const keel::f32 newSpan = keel::clamp(curSpan * zoomFactor, domainSpan / 32.0f, domainSpan);
+            const keel::f32 rel = (cursorX - state.viewMinX) / curSpan;
+            keel::f32 newMin = cursorX - rel * newSpan;
+            keel::f32 newMax = newMin + newSpan;
             if (newMin < opts.minX) {
                 newMin = opts.minX;
                 newMax = newMin + newSpan;
@@ -1129,16 +1129,16 @@ WaterfallViewResponse WaterfallView::Run(
 
         // 2. Hit-test DOA / Emitter Tracks
         for (const auto& trk : opts.tracks) {
-            const float headX = geom.XToScreen(trk.currentX);
-            const float headY = geom.TimeAgoToWaterfallY(0.0f) + (opts.invertTimeAxis ? -8.0f : 8.0f);
+            const keel::f32 headX = geom.XToScreen(trk.currentX);
+            const keel::f32 headY = geom.TimeAgoToWaterfallY(0.0f) + (opts.invertTimeAxis ? -8.0f : 8.0f);
             if (keel::abs(mousePos.x - headX) <= 14.0f && keel::abs(mousePos.y - headY) <= 14.0f) {
                 resp.hoveredTrackId = trk.id;
                 break;
             }
             for (const auto& pt : trk.history) {
                 if (pt.timeAgoSec > geom.historyDurationSec) continue;
-                const float px = geom.XToScreen(pt.xValue);
-                const float py = geom.TimeAgoToWaterfallY(pt.timeAgoSec);
+                const keel::f32 px = geom.XToScreen(pt.xValue);
+                const keel::f32 py = geom.TimeAgoToWaterfallY(pt.timeAgoSec);
                 if (keel::abs(mousePos.x - px) <= 10.0f && keel::abs(mousePos.y - py) <= 10.0f) {
                     resp.hoveredTrackId = trk.id;
                     break;
@@ -1150,7 +1150,7 @@ WaterfallViewResponse WaterfallView::Run(
         // 3. Mouse Click / Drag Interactions
         if (ctx.IsMouseClicked()) {
             const KeyModifiers mods = ctx.GetKeyModifiers();
-            const float gateY = geom.DbToTraceY(state.thresholdGateDb);
+            const keel::f32 gateY = geom.DbToTraceY(state.thresholdGateDb);
             if (inTrace && opts.showThresholdGate && keel::abs(mousePos.y - gateY) <= 7.0f) {
                 state.draggingThreshold = true;
             } else if (mods.shift) {
@@ -1182,11 +1182,11 @@ WaterfallViewResponse WaterfallView::Run(
             resp.changed = true;
             ctx.RequestRepaint(2);
         } else if (state.draggingPan) {
-            const float span = state.panGrabMaxX - state.panGrabMinX;
-            const float refW = keel::max(1.0f, geom.hasWaterfall ? geom.wfRect.w : geom.traceRect.w);
-            const float dxVal = ((mousePos.x - state.panGrabMouseX) / refW) * span;
-            float newMin = state.panGrabMinX - dxVal;
-            float newMax = state.panGrabMaxX - dxVal;
+            const keel::f32 span = state.panGrabMaxX - state.panGrabMinX;
+            const keel::f32 refW = keel::max(1.0f, geom.hasWaterfall ? geom.wfRect.w : geom.traceRect.w);
+            const keel::f32 dxVal = ((mousePos.x - state.panGrabMouseX) / refW) * span;
+            keel::f32 newMin = state.panGrabMinX - dxVal;
+            keel::f32 newMax = state.panGrabMaxX - dxVal;
             if (newMin < opts.minX) {
                 newMin = opts.minX;
                 newMax = newMin + span;
@@ -1200,16 +1200,16 @@ WaterfallViewResponse WaterfallView::Run(
             resp.changed = true;
             ctx.RequestRepaint(2);
         } else if (state.draggingSelection) {
-            const float curX = geom.ScreenToX(mousePos.x);
+            const keel::f32 curX = geom.ScreenToX(mousePos.x);
             state.selectionStartX = keel::min(state.dragAnchorX, curX);
             state.selectionEndX = keel::max(state.dragAnchorX, curX);
-            const float minPxSpan = ((state.viewMaxX - state.viewMinX) / keel::max(1.0f, geom.wfRect.w)) * 4.0f;
+            const keel::f32 minPxSpan = ((state.viewMaxX - state.viewMinX) / keel::max(1.0f, geom.wfRect.w)) * 4.0f;
             state.hasSelectionBand = (state.selectionEndX - state.selectionStartX) > minPxSpan;
             ctx.RequestRepaint(2);
         }
     } else {
         if (state.draggingSelection) {
-            const float minPxSpan = ((state.viewMaxX - state.viewMinX) / keel::max(1.0f, geom.wfRect.w)) * 4.0f;
+            const keel::f32 minPxSpan = ((state.viewMaxX - state.viewMinX) / keel::max(1.0f, geom.wfRect.w)) * 4.0f;
             if ((state.selectionEndX - state.selectionStartX) <= minPxSpan) {
                 state.hasSelectionBand = false;
                 if (opts.showHarmonicComb && state.dragAnchorX > 0.0f) {
@@ -1261,33 +1261,33 @@ WaterfallViewResponse WaterfallView::Run(
         resp.selectionSpanX = state.selectionEndX - state.selectionStartX;
 
         if (!state.liveSliceDb.empty()) {
-            const float domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
-            const keel::usize b0 = static_cast<keel::usize>(keel::clamp(((resp.selectionStartX - opts.minX) / domainSpan) * static_cast<float>(numBins - 1), 0.0f, static_cast<float>(numBins - 1)));
-            const keel::usize b1 = static_cast<keel::usize>(keel::clamp(((resp.selectionEndX - opts.minX) / domainSpan) * static_cast<float>(numBins - 1), 0.0f, static_cast<float>(numBins - 1)));
-            float maxBandDb = opts.dbFloor;
-            double linSum = 0.0;
+            const keel::f32 domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
+            const keel::usize b0 = keel::as<keel::usize>(keel::clamp(((resp.selectionStartX - opts.minX) / domainSpan) * keel::as<keel::f32>(numBins - 1), 0.0f, keel::as<keel::f32>(numBins - 1)));
+            const keel::usize b1 = keel::as<keel::usize>(keel::clamp(((resp.selectionEndX - opts.minX) / domainSpan) * keel::as<keel::f32>(numBins - 1), 0.0f, keel::as<keel::f32>(numBins - 1)));
+            keel::f32 maxBandDb = opts.dbFloor;
+            keel::f64 linSum = 0.0;
             keel::usize count = 0;
             for (keel::usize b = keel::min(b0, b1); b <= keel::max(b0, b1); ++b) {
-                const float db = state.liveSliceDb[b] + opts.gainDb;
+                const keel::f32 db = state.liveSliceDb[b] + opts.gainDb;
                 maxBandDb = keel::max(maxBandDb, db);
-                linSum += keel::pow(10.0, static_cast<double>(db) / 10.0);
+                linSum += keel::pow(10.0, keel::as<keel::f64>(db) / 10.0);
                 count++;
             }
             resp.selectionBandPowerDb = (count > 0)
-                ? static_cast<float>(10.0 * keel::log10(keel::max(1e-14, linSum / static_cast<double>(count))))
+                ? keel::as<keel::f32>(10.0 * keel::log10(keel::max(1e-14, linSum / keel::as<keel::f64>(count))))
                 : maxBandDb;
         }
     }
 
     // Dominant Peak across visible range
     if (!state.liveSliceDb.empty()) {
-        float bestDb = -200.0f;
-        float bestX = state.viewMinX;
-        const float domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
+        keel::f32 bestDb = -200.0f;
+        keel::f32 bestX = state.viewMinX;
+        const keel::f32 domainSpan = keel::max(1e-5f, opts.maxX - opts.minX);
         for (keel::u32 b = 0; b < numBins; ++b) {
-            const float xVal = opts.minX + (static_cast<float>(b) / static_cast<float>(numBins - 1)) * domainSpan;
+            const keel::f32 xVal = opts.minX + (keel::as<keel::f32>(b) / keel::as<keel::f32>(numBins - 1)) * domainSpan;
             if (xVal < state.viewMinX || xVal > state.viewMaxX) continue;
-            const float db = state.liveSliceDb[b] + opts.gainDb;
+            const keel::f32 db = state.liveSliceDb[b] + opts.gainDb;
             if (db > bestDb) {
                 bestDb = db;
                 bestX = xVal;
@@ -1306,7 +1306,7 @@ WaterfallViewResponse WaterfallView::Run(
             tracksFp,
             trk.id,
             trk.callsign,
-            static_cast<keel::u8>(trk.status),
+            keel::as<keel::u8>(trk.status),
             trk.currentX,
             trk.driftRatePerSec,
             trk.levelDb,
@@ -1318,10 +1318,10 @@ WaterfallViewResponse WaterfallView::Run(
     payload->resp = resp;
 
     // Compute visual hash for frame-to-frame damage tracking
-    const auto packF = [](float v) noexcept -> keel::u64 {
+    const auto packF = [](keel::f32 v) noexcept -> keel::u64 {
         keel::u32 b = 0;
-        std::memcpy(&b, &v, sizeof(float));
-        return static_cast<keel::u64>(b);
+        std::memcpy(&b, &v, sizeof(keel::f32));
+        return keel::as<keel::u64>(b);
     };
     keel::u64 h = 14695981039346656037ULL;
     auto mix = [&](keel::u64 v) noexcept {
@@ -1331,9 +1331,9 @@ WaterfallViewResponse WaterfallView::Run(
     mix(state.fullGeneration);
     mix(state.sliceGeneration);
     mix(tracksFp);
-    mix(static_cast<keel::u64>(opts.mode));
-    mix(static_cast<keel::u64>(opts.viewLayout));
-    mix(static_cast<keel::u64>(opts.colormap));
+    mix(keel::as<keel::u64>(opts.mode));
+    mix(keel::as<keel::u64>(opts.viewLayout));
+    mix(keel::as<keel::u64>(opts.colormap));
     mix(packF(resp.visibleMinX));
     mix(packF(resp.visibleMaxX));
     mix(packF(opts.dbFloor));
@@ -1352,14 +1352,14 @@ WaterfallViewResponse WaterfallView::Run(
         mix(packF(resp.selectionStartX));
         mix(packF(resp.selectionEndX));
     }
-    mix(static_cast<keel::u64>(resp.selectedTrackId + 2));
-    mix(static_cast<keel::u64>(resp.hoveredTrackId + 2));
+    mix(keel::as<keel::u64>(resp.selectedTrackId + 2));
+    mix(keel::as<keel::u64>(resp.hoveredTrackId + 2));
     mix(detail::HashArgs(opts.background, opts.border));
     node->visualHash = h;
 
     node->text = "WaterfallView";
     node->SetPayload(payload);
-    node->measureFn = [](const Node* n, float availW, ICanvas* c, const UiTheme& t) noexcept -> Vec2 {
+    node->measureFn = [](const Node* n, keel::f32 availW, ICanvas* c, const UiTheme& t) noexcept -> Vec2 {
         const auto* p = n->As<WaterfallViewPayload>();
         if (!p) return Vec2{520.0f, 420.0f};
         WaterfallViewOptions effOpts = p->opts;

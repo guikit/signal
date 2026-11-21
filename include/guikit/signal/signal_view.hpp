@@ -45,7 +45,7 @@ enum class FftWindowType : keel::u8 {
 
 /// Interactive timeline cue marker displayed on the time ruler and across signal panels.
 struct SignalMarker {
-    double timeSec{0.0};
+    keel::f64 timeSec{0.0};
     keel::FixedString<64> label{};
     Color color{245, 158, 11, 255};
 };
@@ -53,28 +53,28 @@ struct SignalMarker {
 /// Time and optional 2D spectral selection region (iZotope RX / Adobe Audition style).
 struct SignalSelection {
     bool active{false};
-    double startTimeSec{0.0};
-    double endTimeSec{0.0};
+    keel::f64 startTimeSec{0.0};
+    keel::f64 endTimeSec{0.0};
     bool hasSpectralBox{false};     ///< True when a 2D [t0..t1] x [f0..f1] frequency band is selected
-    float lowFreqHz{0.0f};
-    float highFreqHz{0.0f};
+    keel::f32 lowFreqHz{0.0f};
+    keel::f32 highFreqHz{0.0f};
 
-    [[nodiscard]] constexpr double MinTimeSec() const noexcept {
+    [[nodiscard]] constexpr keel::f64 MinTimeSec() const noexcept {
         return startTimeSec < endTimeSec ? startTimeSec : endTimeSec;
     }
-    [[nodiscard]] constexpr double MaxTimeSec() const noexcept {
+    [[nodiscard]] constexpr keel::f64 MaxTimeSec() const noexcept {
         return startTimeSec > endTimeSec ? startTimeSec : endTimeSec;
     }
-    [[nodiscard]] constexpr double DurationSec() const noexcept {
+    [[nodiscard]] constexpr keel::f64 DurationSec() const noexcept {
         return active ? (MaxTimeSec() - MinTimeSec()) : 0.0;
     }
-    [[nodiscard]] constexpr float MinFreqHz() const noexcept {
+    [[nodiscard]] constexpr keel::f32 MinFreqHz() const noexcept {
         return lowFreqHz < highFreqHz ? lowFreqHz : highFreqHz;
     }
-    [[nodiscard]] constexpr float MaxFreqHz() const noexcept {
+    [[nodiscard]] constexpr keel::f32 MaxFreqHz() const noexcept {
         return lowFreqHz > highFreqHz ? lowFreqHz : highFreqHz;
     }
-    [[nodiscard]] constexpr float BandwidthHz() const noexcept {
+    [[nodiscard]] constexpr keel::f32 BandwidthHz() const noexcept {
         return (active && hasSpectralBox) ? (MaxFreqHz() - MinFreqHz()) : 0.0f;
     }
 };
@@ -82,17 +82,17 @@ struct SignalSelection {
 /// Configuration options for the autonomous SignalView (Waveform + Spectrogram DAW analyzer) widget.
 struct SignalViewOptions {
     // --- Signal & DSP Parameters ---
-    float sampleRate{48000.0f};
+    keel::f32 sampleRate{48000.0f};
     SignalPanelOrder panelOrder{SignalPanelOrder::WaveformTop};
-    float splitRatio{0.46f};                        ///< Fraction of plot height assigned to top panel [0.0 .. 1.0]
+    keel::f32 splitRatio{0.46f};                        ///< Fraction of plot height assigned to top panel [0.0 .. 1.0]
     AmplitudeScale amplitudeScale{AmplitudeScale::dBFS};
     FrequencyScale frequencyScale{FrequencyScale::Linear};
     Colormap colormap{Colormap::Inferno};
     FftWindowType fftWindow{FftWindowType::Hann};
     keel::u32 fftSize{512};                          ///< Radix-2 FFT size (256, 512, 1024, 2048)
-    float dbFloor{-90.0f};                          ///< Spectrogram minimum power floor in dBFS
-    float dbCeil{0.0f};                             ///< Spectrogram ceiling in dBFS
-    float waveformGain{1.0f};                       ///< Default vertical amplitude zoom factor (1.0 = 0 dB)
+    keel::f32 dbFloor{-90.0f};                          ///< Spectrogram minimum power floor in dBFS
+    keel::f32 dbCeil{0.0f};                             ///< Spectrogram ceiling in dBFS
+    keel::f32 waveformGain{1.0f};                       ///< Default vertical amplitude zoom factor (1.0 = 0 dB)
 
     // --- Visual & Interactive Features ---
     bool showOverviewBar{true};                     ///< Top full-signal minimap navigator with draggable zoom lens
@@ -107,15 +107,15 @@ struct SignalViewOptions {
     bool allowMarkerEditing{true};                  ///< Double-click time ruler to add/delete cue markers, drag to move
 
     // --- Optional Two-Way External Bindings ---
-    float* splitRatioBinding{nullptr};              ///< Optional external float updated when user drags the splitter
-    float* waveformGainBinding{nullptr};            ///< Optional external float updated when user zooms amplitude ruler
-    double* playheadTimeSec{nullptr};               ///< Optional external playhead timestamp in seconds
+    keel::f32* splitRatioBinding{nullptr};              ///< Optional external float updated when user drags the splitter
+    keel::f32* waveformGainBinding{nullptr};            ///< Optional external float updated when user zooms amplitude ruler
+    keel::f64* playheadTimeSec{nullptr};               ///< Optional external playhead timestamp in seconds
     SignalSelection* selection{nullptr};            ///< Optional external time/spectral selection state
     keel::Array<SignalMarker>* markers{nullptr};    ///< Optional external cue markers array
 
     // --- Programmatic Camera / View Requests ---
-    keel::Optional<double> requestViewStartSec{keel::kNullOpt};
-    keel::Optional<double> requestViewEndSec{keel::kNullOpt};
+    keel::Optional<keel::f64> requestViewStartSec{keel::kNullOpt};
+    keel::Optional<keel::f64> requestViewEndSec{keel::kNullOpt};
     keel::Optional<Vec2> requestFreqRangeHz{keel::kNullOpt};
     bool requestResetView{false};
 
@@ -131,28 +131,28 @@ struct SignalViewOptions {
 
 /// Rich telemetry & interaction response returned by `ui.SignalView(...)`.
 struct SignalViewResponse : public Response {
-    double viewStartSec{0.0};
-    double viewEndSec{0.0};
-    double totalDurationSec{0.0};
+    keel::f64 viewStartSec{0.0};
+    keel::f64 viewEndSec{0.0};
+    keel::f64 totalDurationSec{0.0};
     keel::usize totalSamples{0};
-    float splitRatio{0.46f};
-    float waveformGain{1.0f};
-    float viewMinFreqHz{0.0f};
-    float viewMaxFreqHz{24000.0f};
-    double playheadSec{0.0};
+    keel::f32 splitRatio{0.46f};
+    keel::f32 waveformGain{1.0f};
+    keel::f32 viewMinFreqHz{0.0f};
+    keel::f32 viewMaxFreqHz{24000.0f};
+    keel::f64 playheadSec{0.0};
     SignalSelection selection{};
 
     bool cursorInsidePlot{false};
-    double cursorTimeSec{0.0};
+    keel::f64 cursorTimeSec{0.0};
     keel::usize cursorSampleIndex{0};
-    float cursorAmplitude{0.0f};
-    float cursorDbFs{-120.0f};
-    float cursorFreqHz{0.0f};
-    float cursorSpectralDb{-120.0f};
+    keel::f32 cursorAmplitude{0.0f};
+    keel::f32 cursorDbFs{-120.0f};
+    keel::f32 cursorFreqHz{0.0f};
+    keel::f32 cursorSpectralDb{-120.0f};
 
-    float selectionPeakDbFs{-120.0f};
-    float selectionRmsDbFs{-120.0f};
-    float selectionCentroidHz{0.0f};
+    keel::f32 selectionPeakDbFs{-120.0f};
+    keel::f32 selectionRmsDbFs{-120.0f};
+    keel::f32 selectionCentroidHz{0.0f};
 
     keel::i32 hoveredMarkerIndex{-1};
     keel::i32 activeMarkerIndex{-1};
@@ -163,18 +163,18 @@ class SignalView {
 public:
     static SignalViewResponse Run(
         Context& ctx,
-        keel::ArrayRef<float> samples,
+        keel::ArrayRef<keel::f32> samples,
         const SignalViewOptions& opts = {},
         keel::SourceLocation loc = keel::SourceLocation::current()
     );
 
     [[nodiscard]] static Vec2 Measure(
-        keel::ArrayRef<float> samples,
+        keel::ArrayRef<keel::f32> samples,
         const SignalViewOptions& opts,
         UiSize size,
         ICanvas* canvas = nullptr,
         const UiTheme& theme = {},
-        float availableWidth = 0.0f
+        keel::f32 availableWidth = 0.0f
     );
 };
 

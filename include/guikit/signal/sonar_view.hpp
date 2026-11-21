@@ -41,8 +41,8 @@ enum class SonarTargetClass : keel::u8 {
 
 /// Polar coordinate pair (Range in meters, Azimuth Bearing in degrees [0..360)).
 struct PolarPoint {
-    float rangeMeters{0.0f};
-    float bearingDeg{0.0f};
+    keel::f32 rangeMeters{0.0f};
+    keel::f32 bearingDeg{0.0f};
 };
 
 /// Tracked contact / target rendered on the tactical overlay with velocity vector and snail-trail history.
@@ -50,12 +50,12 @@ struct SonarTarget {
     keel::i32 id{0};
     keel::FixedString<64> callsign{};
     SonarTargetClass classification{SonarTargetClass::Diver};
-    float rangeMeters{100.0f};          ///< Distance from transducer / radar origin in meters
-    float bearingDeg{0.0f};             ///< Azimuth angle in degrees (0 = North / Dead Ahead, clockwise)
-    float speedMetersPerSec{0.8f};      ///< Target speed over ground in m/s
-    float courseDeg{180.0f};            ///< Target heading / course over ground in degrees
-    float depthMeters{6.0f};            ///< Estimated target depth in meters (for 3D/DDS sonar)
-    float snrDb{18.0f};                 ///< Target signal-to-noise ratio in dB
+    keel::f32 rangeMeters{100.0f};          ///< Distance from transducer / radar origin in meters
+    keel::f32 bearingDeg{0.0f};             ///< Azimuth angle in degrees (0 = North / Dead Ahead, clockwise)
+    keel::f32 speedMetersPerSec{0.8f};      ///< Target speed over ground in m/s
+    keel::f32 courseDeg{180.0f};            ///< Target heading / course over ground in degrees
+    keel::f32 depthMeters{6.0f};            ///< Estimated target depth in meters (for 3D/DDS sonar)
+    keel::f32 snrDb{18.0f};                 ///< Target signal-to-noise ratio in dB
     keel::Array<PolarPoint> trail{};    ///< Historical polar positions (snail trail)
 
     [[nodiscard]] SonarTarget clone() const {
@@ -77,10 +77,10 @@ struct SonarTarget {
 /// Tactical perimeter / exclusion sector that triggers an intrusion alarm when entered by a threat target.
 struct SonarGuardZone {
     bool enabled{true};
-    float minRangeMeters{80.0f};
-    float maxRangeMeters{320.0f};
-    float startBearingDeg{310.0f};      ///< Sector start angle in degrees [0..360)
-    float endBearingDeg{50.0f};         ///< Sector end angle in degrees [0..360) (supports wrap-around across 0 deg)
+    keel::f32 minRangeMeters{80.0f};
+    keel::f32 maxRangeMeters{320.0f};
+    keel::f32 startBearingDeg{310.0f};      ///< Sector start angle in degrees [0..360)
+    keel::f32 endBearingDeg{50.0f};         ///< Sector end angle in degrees [0..360) (supports wrap-around across 0 deg)
 };
 
 /// Configuration options for the autonomous SonarView (Polar Heatmap / Diver Detection Sonar / PPI Radar) widget.
@@ -92,20 +92,20 @@ struct SonarViewOptions {
     SonarScanMode scanMode{SonarScanMode::MultibeamContinuous};
     Colormap colormap{Colormap::Gold};
 
-    float maxRangeMeters{500.0f};                   ///< Full-scale acoustic/radar range corresponding to bin `numRangeBins - 1`
-    float minRangeMeters{0.0f};                     ///< Minimum blind-zone range in meters
-    float headingDeg{0.0f};                         ///< Sensor center boresight / vessel heading in degrees
-    float sectorApertureDeg{120.0f};                ///< Angular fan width in degrees when in `SectorWedge` mode (e.g. 60..180)
-    float matrixStartBearingDeg{0.0f};              ///< Azimuth of beam 0 in `polarMatrix`
-    float matrixEndBearingDeg{360.0f};              ///< Azimuth of last beam in `polarMatrix`
+    keel::f32 maxRangeMeters{500.0f};                   ///< Full-scale acoustic/radar range corresponding to bin `numRangeBins - 1`
+    keel::f32 minRangeMeters{0.0f};                     ///< Minimum blind-zone range in meters
+    keel::f32 headingDeg{0.0f};                         ///< Sensor center boresight / vessel heading in degrees
+    keel::f32 sectorApertureDeg{120.0f};                ///< Angular fan width in degrees when in `SectorWedge` mode (e.g. 60..180)
+    keel::f32 matrixStartBearingDeg{0.0f};              ///< Azimuth of beam 0 in `polarMatrix`
+    keel::f32 matrixEndBearingDeg{360.0f};              ///< Azimuth of last beam in `polarMatrix`
 
     // --- Hydroacoustic / Radar DSP Parameters ---
-    float gainDb{0.0f};                             ///< Receiver gain offset in dB (-20 .. +40 dB)
-    float tvgAmount{0.55f};                         ///< Time-Varied Gain (0.0 .. 1.0) compensating range attenuation
-    float clutterThreshold{0.12f};                  ///< Noise/reverberation floor cutoff [0.0 .. 0.85]
-    float persistence{0.82f};                       ///< Temporal frame-to-frame phosphor/acoustic persistence [0.0 .. 0.97]
-    float sweepAngleDeg{0.0f};                      ///< Current active sweep beam azimuth (for `RotatingSweep` mode)
-    float sweepBeamWidthDeg{18.0f};                 ///< Angular width of the active sweep update wedge
+    keel::f32 gainDb{0.0f};                             ///< Receiver gain offset in dB (-20 .. +40 dB)
+    keel::f32 tvgAmount{0.55f};                         ///< Time-Varied Gain (0.0 .. 1.0) compensating range attenuation
+    keel::f32 clutterThreshold{0.12f};                  ///< Noise/reverberation floor cutoff [0.0 .. 0.85]
+    keel::f32 persistence{0.82f};                       ///< Temporal frame-to-frame phosphor/acoustic persistence [0.0 .. 0.97]
+    keel::f32 sweepAngleDeg{0.0f};                      ///< Current active sweep beam azimuth (for `RotatingSweep` mode)
+    keel::f32 sweepBeamWidthDeg{18.0f};                 ///< Angular width of the active sweep update wedge
 
     // --- Tactical Overlay & Instruments ---
     keel::ArrayRef<SonarTarget> targets{};          ///< Active ARPA / Diver Detection tracked contacts
@@ -121,9 +121,9 @@ struct SonarViewOptions {
 
     // --- Two-Way Interactive State Bindings ---
     keel::i32* selectedTargetId{nullptr};                 ///< Optional external ID of currently selected/locked target (-1 = none)
-    float* eblBearingDeg{nullptr};                  ///< Optional external Electronic Bearing Line angle in degrees
-    float* vrmRangeMeters{nullptr};                 ///< Optional external Variable Range Marker distance in meters
-    float* viewRangeZoom{nullptr};                  ///< Optional external range zoom multiplier (0.25 .. 1.0, wheel-zoomable)
+    keel::f32* eblBearingDeg{nullptr};                  ///< Optional external Electronic Bearing Line angle in degrees
+    keel::f32* vrmRangeMeters{nullptr};                 ///< Optional external Variable Range Marker distance in meters
+    keel::f32* viewRangeZoom{nullptr};                  ///< Optional external range zoom multiplier (0.25 .. 1.0, wheel-zoomable)
 
     // --- Programmatic View Requests ---
     bool requestResetView{false};
@@ -142,17 +142,17 @@ struct SonarViewOptions {
 /// Rich tactical & hydroacoustic telemetry returned by `ui.SonarView(...)`.
 struct SonarViewResponse : public Response {
     SonarDisplayMode displayMode{SonarDisplayMode::PPI_360};
-    float visibleMaxRangeMeters{500.0f};
-    float rangeZoom{1.0f};
+    keel::f32 visibleMaxRangeMeters{500.0f};
+    keel::f32 rangeZoom{1.0f};
 
     bool cursorInsidePlot{false};
-    float cursorRangeMeters{0.0f};
-    float cursorBearingDeg{0.0f};
-    float cursorEchoDb{-60.0f};
+    keel::f32 cursorRangeMeters{0.0f};
+    keel::f32 cursorBearingDeg{0.0f};
+    keel::f32 cursorEchoDb{-60.0f};
 
     bool eblVrmActive{false};
-    float eblBearingDeg{45.0f};
-    float vrmRangeMeters{250.0f};
+    keel::f32 eblBearingDeg{45.0f};
+    keel::f32 vrmRangeMeters{250.0f};
 
     keel::i32 hoveredTargetId{-1};
     keel::i32 selectedTargetId{-1};
@@ -167,18 +167,18 @@ class SonarView {
 public:
     static SonarViewResponse Run(
         Context& ctx,
-        keel::ArrayRef<float> polarMatrix,
+        keel::ArrayRef<keel::f32> polarMatrix,
         const SonarViewOptions& opts = {},
         keel::SourceLocation loc = keel::SourceLocation::current()
     );
 
     [[nodiscard]] static Vec2 Measure(
-        keel::ArrayRef<float> polarMatrix,
+        keel::ArrayRef<keel::f32> polarMatrix,
         const SonarViewOptions& opts,
         UiSize size,
         ICanvas* canvas = nullptr,
         const UiTheme& theme = {},
-        float availableWidth = 0.0f
+        keel::f32 availableWidth = 0.0f
     );
 };
 
