@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(guikit)
+
+include("${CMAKE_CURRENT_LIST_DIR}/guikitSignalTargets.cmake")
+check_required_components(guikit_signal)
