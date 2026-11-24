@@ -166,17 +166,13 @@ struct WaveformPyramid {
         h *= 1099511628211ULL;
     };
     mix(samples.size());
-    keel::u32 srBits = 0;
-    std::memcpy(&srBits, &sampleRate, sizeof(keel::f32));
-    mix(srBits);
+    mix(keel::bit_cast<keel::u32>(sampleRate));
 
     if (!samples.empty()) {
         const keel::usize probes = keel::min<keel::usize>(64, samples.size());
         for (keel::usize i = 0; i < probes; ++i) {
             const keel::usize idx = (i * (samples.size() - 1)) / keel::max<keel::usize>(1, probes - 1);
-            keel::u32 bits = 0;
-            std::memcpy(&bits, &samples[idx], sizeof(keel::f32));
-            mix(bits);
+            mix(keel::bit_cast<keel::u32>(samples[idx]));
         }
     }
     return h;

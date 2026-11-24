@@ -289,9 +289,7 @@ void DrawWaterfallViewNode(const Node* node, ICanvas& canvas, const UiTheme& the
     const Color accentTextCol{56, 189, 248, 245};
 
     const auto packFloat = [](keel::f32 v) noexcept -> keel::u64 {
-        keel::u32 bits = 0;
-        std::memcpy(&bits, &v, sizeof(keel::f32));
-        return keel::as<keel::u64>(bits);
+        return keel::as<keel::u64>(keel::bit_cast<keel::u32>(v));
     };
 
     keel::u64 staticKey = 14695981039346656037ULL;
@@ -1005,12 +1003,12 @@ WaterfallViewResponse WaterfallView::Run(
                 const keel::u32 ringRow = (state.headRow + historyRows - age) % historyRows;
                 const keel::f32* srcRow = opts.initialHistoryMatrix.data() + keel::as<keel::usize>(age) * numBins;
                 keel::f32* dstRow = state.ringBufferDb.data() + keel::as<keel::usize>(ringRow) * numBins;
-                std::memcpy(dstRow, srcRow, keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+                keel::mem_copy(dstRow, srcRow, keel::as<keel::usize>(numBins) * sizeof(keel::f32));
             }
             state.validRows = historyRows;
-            std::memcpy(state.liveSliceDb.data(), opts.initialHistoryMatrix.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
-            std::memcpy(state.peakHoldDb.data(), state.liveSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
-            std::memcpy(state.averageDb.data(), state.liveSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            keel::mem_copy(state.liveSliceDb.data(), opts.initialHistoryMatrix.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            keel::mem_copy(state.peakHoldDb.data(), state.liveSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            keel::mem_copy(state.averageDb.data(), state.liveSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
 
             const keel::u32 scanRows = keel::min(historyRows, 48u);
             for (keel::u32 age = 1; age < scanRows; ++age) {
@@ -1021,11 +1019,11 @@ WaterfallViewResponse WaterfallView::Run(
                 }
             }
         } else if (latestSliceDb.size() >= numBins) {
-            std::memcpy(state.ringBufferDb.data() + keel::as<keel::usize>(state.headRow) * numBins,
-                        latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
-            std::memcpy(state.liveSliceDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
-            std::memcpy(state.peakHoldDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
-            std::memcpy(state.averageDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            keel::mem_copy(state.ringBufferDb.data() + keel::as<keel::usize>(state.headRow) * numBins,
+                           latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            keel::mem_copy(state.liveSliceDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            keel::mem_copy(state.peakHoldDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+            keel::mem_copy(state.averageDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
             state.validRows = 1;
         }
 
@@ -1038,8 +1036,8 @@ WaterfallViewResponse WaterfallView::Run(
         state.headRow = (state.headRow + 1) % historyRows;
         state.validRows = keel::min(historyRows, state.validRows + 1);
         keel::f32* dstRow = state.ringBufferDb.data() + keel::as<keel::usize>(state.headRow) * numBins;
-        std::memcpy(dstRow, latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
-        std::memcpy(state.liveSliceDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+        keel::mem_copy(dstRow, latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
+        keel::mem_copy(state.liveSliceDb.data(), latestSliceDb.data(), keel::as<keel::usize>(numBins) * sizeof(keel::f32));
 
         const keel::f32 decayStep = keel::max(0.0f, opts.peakDecayDbPerSec) * dtSec;
         const keel::f32 alpha = keel::clamp(opts.averageAlpha, 0.01f, 1.0f);
@@ -1319,9 +1317,7 @@ WaterfallViewResponse WaterfallView::Run(
 
     // Compute visual hash for frame-to-frame damage tracking
     const auto packF = [](keel::f32 v) noexcept -> keel::u64 {
-        keel::u32 b = 0;
-        std::memcpy(&b, &v, sizeof(keel::f32));
-        return keel::as<keel::u64>(b);
+        return keel::as<keel::u64>(keel::bit_cast<keel::u32>(v));
     };
     keel::u64 h = 14695981039346656037ULL;
     auto mix = [&](keel::u64 v) noexcept {
