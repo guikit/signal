@@ -79,7 +79,7 @@ void TestSignalViewWidgetWorkflow() {
 
     auto renderFrame = [&]() {
         ui.BeginFrame({keel::as<keel::f32>(width), keel::as<keel::f32>(height)});
-        if (auto box = ui.Box({
+        if (auto box = guikit::Box(ui, {
             .width = SizeMode::Stretch,
             .height = SizeMode::Stretch,
             .padding = Padding::All(8.0f)
@@ -265,8 +265,8 @@ void TestSonarAndSignalGpuShaderPipeline() {
 
     bool btnToggle = false;
     auto renderUI = [&]() {
-        if (auto col = ui.Column({.gap = 8.0f, .padding = Padding::All(8.0f)})) {
-            if (ui.Button({.text = btnToggle ? "Mode B" : "Mode A"})) {
+        if (auto col = guikit::Column(ui, {.gap = 8.0f, .padding = Padding::All(8.0f)})) {
+            if (guikit::Button(ui, {.text = btnToggle ? "Mode B" : "Mode A"})) {
                 btnToggle = !btnToggle;
             }
             guikit::signal::SonarView(ui, sonarMatrix, {
@@ -481,7 +481,7 @@ void TestWaterfallViewWidgetAndGpuRingBuffer() {
     WaterfallViewResponse respDoa;
 
     auto renderUI = [&]() {
-        if (auto col = ui.Column({.gap = 12.0f, .padding = Padding::All(12.0f)})) {
+        if (auto col = guikit::Column(ui, {.gap = 12.0f, .padding = Padding::All(12.0f)})) {
             respSpec = guikit::signal::WaterfallView(ui, specSlice, {
                 .mode = WaterfallMode::SpectrumRtsa,
                 .viewLayout = WaterfallLayout::SplitTraceAndWaterfall,
@@ -586,10 +586,10 @@ void TestPartiallyClippedGpuScenesAboveBottomPanel() {
 
             auto renderClippedScene = [&](keel::f64 timeSec) {
                 clipUi.SetCurrentTime(timeSec);
-                if (auto rootCol = clipUi.Column({.gap = 0.0f, .padding = 0.0f})) {
+                if (auto rootCol = guikit::Column(clipUi, {.gap = 0.0f, .padding = 0.0f})) {
                     // Upper ScrollArea is constrained to ~540px while inner simulated tablet/window is 700px tall
-                    if (auto scroll = clipUi.ScrollArea({.gap = 0.0f, .padding = 0.0f})) {
-                        if (auto stageFrame = clipUi.Box({
+                    if (auto scroll = guikit::ScrollArea(clipUi, {.gap = 0.0f, .padding = 0.0f})) {
+                        if (auto stageFrame = guikit::Box(clipUi, {
                             .width = 900.0f,
                             .height = 700.0f,
                             .clipChildren = true
@@ -613,12 +613,12 @@ void TestPartiallyClippedGpuScenesAboveBottomPanel() {
                             }
                         }
                     }
-                    if (auto bp = clipUi.BottomPanel(bottomOpen, {
+                    if (auto bp = guikit::BottomPanel(clipUi, bottomOpen, {
                         .height = 260.0f,
                         .resizable = true,
                         .allowCollapse = true
                     })) {
-                        auto taResp = clipUi.TextArea(codeBuf, {
+                        auto taResp = guikit::TextArea(clipUi, codeBuf, {
                             .autoHeight = false,
                             .readOnly = true,
                             .showLineNumbers = true,

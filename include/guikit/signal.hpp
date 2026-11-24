@@ -18,7 +18,8 @@ inline SignalViewResponse SignalView(
     const SignalViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {
-    return ui.Run<guikit::SignalView>(samples, opts, loc);
+    WidgetExecGuard guard(ui);
+    return guikit::SignalView::Run(ui, samples, opts, loc);
 }
 
 /// Renders a Polar Heatmap / Diver Detection Sonar / PPI 360 / Sector / B-Scan Radar widget.
@@ -28,7 +29,8 @@ inline SonarViewResponse SonarView(
     const SonarViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {
-    return ui.Run<guikit::SonarView>(polarMatrix, opts, loc);
+    WidgetExecGuard guard(ui);
+    return guikit::SonarView::Run(ui, polarMatrix, opts, loc);
 }
 
 /// Renders an RTSA Spectrum Analyzer & DOA / BTR Waterfall tracker widget.
@@ -38,7 +40,8 @@ inline WaterfallViewResponse WaterfallView(
     const WaterfallViewOptions& opts = {},
     keel::SourceLocation loc = keel::SourceLocation::current()
 ) {
-    return ui.Run<guikit::WaterfallView>(latestSliceDb, opts, loc);
+    WidgetExecGuard guard(ui);
+    return guikit::WaterfallView::Run(ui, latestSliceDb, opts, loc);
 }
 
 } // namespace guikit::signal
